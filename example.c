@@ -78,7 +78,7 @@ static void unregisterExampleSet(ExampleSet S) {
 
 static void registerExample(Example E, ExampleSet S) {
   E->next = NULL;
-  if (!S->firstExample) {
+    if (!S->firstExample) {
     S->firstExample = E;
     S->lastExample = E;
   } else {
@@ -2074,7 +2074,7 @@ void injectExternalInputNoise(void) {
 /* Loads inputs and targets.  This no longer respects held groups, so just
    don't change the input or targets when you want to hold a group.  
    First the external inputs to all input units are set to the default value.
-   If this is NaN, the units will not be hard-clamped.  Then the sparse and 
+   If this is NaN, the units will not be hard-clamped.  Then the sparse and
    dense ranges are applied.  The same is done for targets, where NaN means no
    error or derivative. */
 flag standardLoadEvent(Event V) {
