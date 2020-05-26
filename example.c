@@ -18,7 +18,7 @@ flag useTrainingSet(ExampleSet S) {
   Net->trainingSet = S;
   signalSetsChanged(TRAIN_SET);
   return TCL_OK;
-}
+} /* TCL_OK is return code 0 */
 
 flag useTestingSet(ExampleSet S) {
   Net->testingSet = S;
@@ -26,6 +26,8 @@ flag useTestingSet(ExampleSet S) {
   return TCL_OK;
 }
 
+/* returns the root that contains name */
+/* what is Root? */
 ExampleSet lookupExampleSet(char *name) {
   int s;
   for (s = 0; s < Root->numExampleSets; s++)
@@ -76,6 +78,7 @@ static void unregisterExampleSet(ExampleSet S) {
   signalSetListsChanged();
 }
 
+
 static void registerExample(Example E, ExampleSet S) {
   E->next = NULL;
     if (!S->firstExample) {
@@ -89,6 +92,8 @@ static void registerExample(Example E, ExampleSet S) {
   E->set = S;
 }
 
+// exampleset class
+// where are the variables from? 
 ExampleSet newExampleSet(char *name) {
   ExampleSet S = (ExampleSet) safeCalloc(1, sizeof *S, "addExamples:S");
   S->name               = copyString(name);
@@ -110,6 +115,8 @@ ExampleSet newExampleSet(char *name) {
   return S;
 }
 
+
+// example has exampleSet 
 Example newExample(ExampleSet S) {
   Example E = (Example) safeCalloc(1, sizeof *E, "newExample:E");
   E->frequency = DEF_E_frequency;
