@@ -20,7 +20,7 @@ class ExampleSet:
     pipeParser: ParseRec 
     # whats that ^^
 
-    pipeLoop: flag 
+    pipeLoop: bool # flag
     # whats python eq for flag? 
     pipeExampleNum: int
 
@@ -92,9 +92,9 @@ class Event:
     """
 
     input: Range
-    sharedInputs: flag
+    sharedInputs: bool # flag
     target: range
-    sharedTargets: flag
+    sharedTargets: bool # flag
     
     # float = real
     maxTime: float
@@ -126,9 +126,8 @@ class Range:
 
     next: Range
 
-    def __init__(self, V: Event, L: Range, doingInputs: flag):
-        # python flags? 
-
+    def __init__(self, V: Event, L: Range, doing_inputs: bool):
+        # python flags?
         # Range newRange(Event V, Range L, flag doingInputs) {
         # Range N = (Range) safeCalloc(1, sizeof(struct range), "newRange:N");
         # N->value = (doingInputs) ? V->activeInput : V->activeTarget;
@@ -139,3 +138,26 @@ class Range:
         # }
         # return N;
         # }
+
+def initialize_event(V:Event, E:Example):
+    S = E.set
+    V.example = E
+    V.maxTime = DEF_V_maxTime
+    V.minTime = DEF_V_minTime
+    V.graceTime = DEF_V_graceTime
+    V.defaultInput = S.defaultInput
+    V.activeInput = S.activeInput
+    V.defaultTarget = S.defaultTarget
+    V.activeTarget = S.activeTarget
+    # initEventExtension(V)
+
+def register_example(E: Example, S: ExampleSet):
+    E.next = None
+    if not S.firstExample:
+        S.firstExample = E
+        S.lastExample = E
+    else:
+        S.lastExample.next = E
+        S.lastExample = E
+    S.numExamples += 1
+    E.set = S
