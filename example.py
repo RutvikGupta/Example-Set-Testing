@@ -124,9 +124,8 @@ class Range:
 
     value: float            # Only used for sparse encodings
     unit: int               # Only used for sparse encodings
-    next: Range
 
-    def __init__(self, V: Event, L: Range, doing_inputs: bool):
+    def __init__(self, V: Event, doing_inputs: bool, L=None):
         if doing_inputs:
             self.value = V.activeInput
         else:
