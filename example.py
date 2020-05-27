@@ -4,7 +4,7 @@ class ExampleSet:
     name: str
     num: int
     # need python mask
-    mode: mask
+    mode: int # mask
     numExamples: int
     numEvents: int
     ext: ExSetExt 
@@ -101,7 +101,7 @@ class Event:
     minTime: float
     graceTime: float
     defaultInput: float
-    DEF_S_activeInput: float
+    activeInput: float
     defaultTarget: float
     activeTarget: float
 
@@ -112,32 +112,31 @@ class Event:
     def __init__(self):
         pass
 
+
 class Range:
     """range"""
 
     groupName: str          # If null, unit offsets are for the net
     numUnits: int
     firstUnit: int          # Only used for dense encodings
-    #float replaces real
+    # float replaces real
     val: float              # Only used for dense encodings
 
     value: float            # Only used for sparse encodings
     unit: int               # Only used for sparse encodings
 
-    next: Range
-
-    def __init__(self, V: Event, L: Range, doing_inputs: bool):
-        # python flags?
-        # Range newRange(Event V, Range L, flag doingInputs) {
-        # Range N = (Range) safeCalloc(1, sizeof(struct range), "newRange:N");
-        # N->value = (doingInputs) ? V->activeInput : V->activeTarget;
-        # if (L) L->next = N;
-        # else {
-        #     if (doingInputs) V->input = N;
-        #     else V->target = N;
-        # }
-        # return N;
-        # }
+    def __init__(self, V: Event, doing_inputs: bool, L=None):
+        if doing_inputs:
+            self.value = V.activeInput
+        else:
+            self.value = V.activeTarget
+        if L:
+            L.next = self
+        else:
+            if doing_inputs:
+                V.input = self
+            else:
+                V.target = self
 
 def initialize_event(V:Event, E:Example):
     S = E.set
@@ -151,6 +150,7 @@ def initialize_event(V:Event, E:Example):
     V.activeTarget = S.activeTarget
     # initEventExtension(V)
 
+
 def register_example(E: Example, S: ExampleSet):
     E.next = None
     if not S.firstExample:
@@ -162,7 +162,8 @@ def register_example(E: Example, S: ExampleSet):
     S.numExamples += 1
     E.set = S
 
-def cleanExample(E: Example):
+
+def clean_example(E: Example):
     i = 0
     V = Event()
     N, L = Range(), Range()
@@ -178,18 +179,25 @@ def cleanExample(E: Example):
                 while L:
                     N = L.next
                     L = N
+<<<<<<< HEAD
                     # free 
             if !V.sharedTargets:
+=======
+            if not V.sharedTargets:
+>>>>>>> f24f8f74160b7353a8b2f0fb09cd78861675413a
                 L = V.target
                 while L:
                     N = L.next
                     L = N
-                    # free 
             if V.proc:
                 Tcl_DecrRefCount(V.proc) #!
             freeEventExtension(V) #!
+<<<<<<< HEAD
         
         # free E.event
+=======
+
+>>>>>>> f24f8f74160b7353a8b2f0fb09cd78861675413a
 
 def clearExample(E: Example):
     E.name = None
