@@ -139,6 +139,9 @@ class Range:
         # return N;
         # }
 
+
+
+
 def initialize_event(V:Event, E:Example):
     S = E.set
     V.example = E
@@ -161,3 +164,50 @@ def register_example(E: Example, S: ExampleSet):
         S.lastExample = E
     S.numExamples += 1
     E.set = S
+
+def cleanExample(E: Example):
+    int i = 0
+    V = Event()
+    N, L = Range(), Range()
+    if !Event():
+        return
+    if E.proc:
+        Tcl_DecrRefCount(E.proc) #! function 
+    if E.event:
+        for i in range(E.numEvents):
+            V = E.event + i
+            if !V.sharedInputs:
+                L = V.input
+                while L:
+                    N = L.next
+                    L = N
+                    # free 
+            if !V.sharedTargets:
+                L = V.target
+                while L:
+                    N = L.next
+                    L = N
+                    # free 
+            if V.proc:
+                Tcl_DecrRefCount(V.proc) #!
+            freeEventExtension(V) #!
+        
+        # free E.event
+
+def clearExample(E: Example):
+    E.name = None
+    E.num = 0
+    E.numEvents = 0
+    E.event = None
+    E.next = None
+    E.frequency = DEF_E_frequency
+    E.probability = 0.0
+    E.proc = None
+
+def freeExample(E: Example):
+    if !E: 
+        return
+    # cleanExample(E)
+    # freeExampleExtension(E)
+    # free(E)
+
