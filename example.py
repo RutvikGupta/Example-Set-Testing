@@ -1,3 +1,6 @@
+from typing import List, Dict, Tuple
+
+
 class ExampleSet:
     """ set of examples linked list
     """
@@ -37,7 +40,7 @@ class ExampleSet:
     # int replaces short
     numGroupNames: short #hidden
     maxGroupNames: short #hidden
-    groupName: str #hidden
+    groupName: list #hidden
 
     #what are flags and how to translate? 
 
@@ -59,7 +62,7 @@ class ExampleSet:
         self.loadExample = standardLoadExample
         self.numGroupNames = 0
         self.maxGroupNames = 0
-        self.groupName = NULL
+        self.groupName = []
 
 
 class Example:
@@ -238,35 +241,38 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
 #   return TCL_ERROR;
 # }
 
-# do we need custom memory management? 
-def freeExampleSet(S: ExampleSet):
-    E, N = Example(), Example()
-    if not S:
-        return
-    # free S.name
-    E = S.firstExample
-    while E:
-        N = E.next
-        # freeExample(E)
-        E = N
-    #free S.example
-    #free S.permuted
-    if S.proc:
-        #Tcl_DecrRefCount(S->proc)
-    if S.pipeParser:
-        # parseError(S->pipeParser, "");
-        # free(S->pipeParser);
-    # FREE(S->groupName);
+"""Not sure but we dont need this code even """
+# # do we need custom memory management?
+# def freeExampleSet(S: ExampleSet):
+#     # E, N = Example(), Example()
+#     if not S:
+#         return
+#     # free S.name
+#     E = S.firstExample
+#     while E:
+#         N = E.next
+#         # freeExample(E)
+#         E = N
+#     #free S.example
+#     #free S.permuted
+#     if S.proc:
+#         #Tcl_DecrRefCount(S->proc)
+#     if S.pipeParser:
+#         # parseError(S->pipeParser, "");
+#         # free(S->pipeParser);
+#     # FREE(S->groupName);
+#
+#     # freeExSetExtension(S);
+#     # free(S);
+#
 
-    # freeExSetExtension(S);
-    # free(S);
-
-# This puts all the examples in arrays and does some other calculations 
-def compileExampleSet(S: ExampleSet):
+"""This puts all the examples in arrays and does some other calculations"""
+def compile_example_set(S: ExampleSet):
     E = Example()
     i, v = 0, 0
 
-    # what is Tcl Cmd info? 
+    # what is Tcl Cmd info?
+
 
 # This parses a list of event numbers 
 # this function copy pasted C function calls; will need to reimplement some of them 
@@ -279,7 +285,7 @@ def parseEventList(R: ParseRec, eventActive: List[str], num: int) -> bool:
     # skipBlank(R)
     while R.s[0].isdigit() or R.s[0] == "*":
         empty = False
-        if stringMatch(R, "*"): # ! C function
+        if R == "*":
             for v in range(num):
                 eventActive[v] = True
         else:
@@ -302,10 +308,11 @@ def parseEventList(R: ParseRec, eventActive: List[str], num: int) -> bool:
         for v in range(num):
             eventActive[v] = True
     return True
-        
-def tidyUpRange(L: Range, unit: int, val: float, sparseMode: bool):
+
+
+def tidy_up_range(L: Range, unit: int, val: float, sparseMode: bool):
     i = 1
-    if !L: 
+    if not L:
         return
     if sparseMode:
         # intArray function call is used for memory allocation 
@@ -321,19 +328,17 @@ def tidyUpRange(L: Range, unit: int, val: float, sparseMode: bool):
             # "tidyUpRange:L->val"
 
 
-def registerGroupName(name: str, S: ExampleSet) -> str:
+def register_group_name(name: str, S: ExampleSet) -> str:
     i = 0
     while i < S.numGroupNames and S.groupName[i] == name:
         i += 1
     if i == S.numGroupNames:
         if S.maxGroupNames == 0:
             S.maxGroupNames = 16
-            S.groupName = "registerGroupName"
         elif i == S.maxGroupNames:
             S.maxGroupNames *= 2
-            S.groupName = "registerGroupName"
       
         S.numGroupNames += 1
-        # S.groupName[S.numGroupNames] = copyString(name)    
+        S.groupName[S.numGroupNames] = name
     return S.groupName[i]
     
