@@ -7,16 +7,16 @@ class ExampleSet:
     mode: int # mask
     numExamples: int
     numEvents: int
-    ext: ExSetExt 
+    ext = None #: ExSetExt
     # where is ExSetExt defined?? 
 
-    example: Example
-    permuted: Example
+    example = None #: Example
+    permuted = None #: Example
     currentExampleNum: int
-    currentExample: Example
-    firstExample: Example
-    lastExample: Example
-    pipeExample: Example
+    currentExample = None #: Example
+    firstExample = None #: Example
+    lastExample = None #: Example
+    pipeExample = None #: Example
     pipeParser: ParseRec 
     # whats that ^^
 
@@ -61,6 +61,7 @@ class ExampleSet:
         self.maxGroupNames = 0
         self.groupName = NULL
 
+
 class Example:
     """ example
     """
@@ -68,30 +69,31 @@ class Example:
     name: str
     num: int
     numEvents: int
-    event: Event
-    set: ExampleSet
-    next: Example
-    ext: ExampleExt
+    event = None  #: Event
+    set = None  #: ExampleSet
+    next = None  #: Example
+    ext = None  #: ExampleExt
 
     # float replaces real
     frequency: float
     probability: float
 
     proc: Tcl_Obj
-    # proc function is defined in the C macros 
+
+    # proc function is defined in the C macros
 
     def __init__(self, S: ExampleSet):
-
         self.frequency = DEF_E_frequency
         self.set = S
 
         # initExampleExtension(E)
 
+
 class Event:
     """ event! 
     """
 
-    input: Range
+    input = None #: Range
     sharedInputs: bool # flag
     target: range
     sharedTargets: bool # flag
@@ -107,7 +109,7 @@ class Event:
 
     proc: Tcl_Obj
     example: Example
-    ext: EventExt
+    ext = None #: EventExt
 
     def __init__(self):
         pass
