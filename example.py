@@ -66,9 +66,9 @@ class Example:
     """ example
     """
 
-    name: str
-    num: int
-    numEvents: int
+    name = None #: str
+    num = 0 # : int
+    numEvents = 0 #: int
     event = None  #: Event
     set = None  #: ExampleSet
     next = None  #: Example
@@ -76,7 +76,7 @@ class Example:
 
     # float replaces real
     frequency: float
-    probability: float
+    probability = 0.0 #: float
 
     proc: Tcl_Obj
 
@@ -111,8 +111,17 @@ class Event:
     example: Example
     ext = None #: EventExt
 
-    def __init__(self):
-        pass
+    def __init__(self, E: Example):
+        S = E.set
+        self.example = E
+        self.maxTime = DEF_V_maxTime
+        self.minTime = DEF_V_minTime
+        self.graceTime = DEF_V_graceTime
+        self.defaultInput = S.defaultInput
+        self.activeInput = S.activeInput
+        self.defaultTarget = S.defaultTarget
+        self.activeTarget = S.activeTarget
+        # initEventExtension(V)
 
 
 class Range:
@@ -140,19 +149,6 @@ class Range:
             else:
                 V.target = self
 
-def initialize_event(V:Event, E:Example):
-    S = E.set
-    V.example = E
-    V.maxTime = DEF_V_maxTime
-    V.minTime = DEF_V_minTime
-    V.graceTime = DEF_V_graceTime
-    V.defaultInput = S.defaultInput
-    V.activeInput = S.activeInput
-    V.defaultTarget = S.defaultTarget
-    V.activeTarget = S.activeTarget
-    # initEventExtension(V)
-
-
 def register_example(E: Example, S: ExampleSet):
     E.next = None
     if not S.firstExample:
@@ -169,7 +165,7 @@ def clean_example(E: Example):
     i = 0
     # V = Event()
     # N, L = Range(), Range()
-    if not Event():
+    if not E:
         return
     if E.proc:
         Tcl_DecrRefCount(E.proc)  # ! function
@@ -245,7 +241,8 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
 # do we need custom memory management? 
 def freeExampleSet(S: ExampleSet):
     E, N = Example(), Example()
-    if !S return
+    if not S:
+        return
     # free S.name
     E = S.firstExample
     while E:
