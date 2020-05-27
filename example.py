@@ -266,3 +266,74 @@ def compileExampleSet(S: ExampleSet):
     E = Example()
     i, v = 0, 0
 
+    # what is Tcl Cmd info? 
+
+# This parses a list of event numbers 
+# this function copy pasted C function calls; will need to reimplement some of them 
+# used bool for flag; true replaces Tcl_Ok
+def parseEventList(R: ParseRec, eventActive: List[str], num: int) -> bool:
+    empty = True
+    v, w = 0, 0
+    # bzero((void *) eventActive, num)
+
+    # skipBlank(R)
+    while R.s[0].isdigit() or R.s[0] == "*":
+        empty = False
+        if stringMatch(R, "*"): # ! C function
+            for v in range(num):
+                eventActive[v] = True
+        else:
+            if readInt(R, &v)): # ! C functions
+                return parseError(R, "error reading event list")
+            if v < 0 or v >= num:
+                return parseError(R, "event (%d) out of range", v)
+            if stringMatch(R, "-"):
+                if readInt(R, &w):
+                    return parseError(R, "error reading event range")
+                if w <= v or w >= num:
+                    return parseError(R, "event (%d) out of range", w)
+            else:
+                w = v
+            while v <= w:
+                eventActive[v] = True
+                v += 1
+        # skipBlank(R)
+    if empty:
+        for v in range(num):
+            eventActive[v] = True
+    return True
+        
+def tidyUpRange(L: Range, unit: int, val: float, sparseMode: bool):
+    i = 1
+    if !L: 
+        return
+    if sparseMode:
+        # intArray function call is used for memory allocation 
+        # what does the name do - is it important? 
+        L.unit = []
+        for i in range(L.numUnits):
+            L.unit[i] = unit[i]
+            # "tidyUpRange:L->unit"
+    else:
+        L.val = []
+        for i in range(L.numUnits):
+            L.val[i] = val[i]
+            # "tidyUpRange:L->val"
+
+
+def registerGroupName(name: str, S: ExampleSet) -> str:
+    i = 0
+    while i < S.numGroupNames and S.groupName[i] == name:
+        i += 1
+    if i == S.numGroupNames:
+        if S.maxGroupNames == 0:
+            S.maxGroupNames = 16
+            S.groupName = "registerGroupName"
+        elif i == S.maxGroupNames:
+            S.maxGroupNames *= 2
+            S.groupName = "registerGroupName"
+      
+        S.numGroupNames += 1
+        # S.groupName[S.numGroupNames] = copyString(name)    
+    return S.groupName[i]
+    
