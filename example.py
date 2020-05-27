@@ -1,4 +1,6 @@
 from typing import List, Dict, Tuple
+TCL_ERROR = False
+TCL_OK = True
 
 
 class ExampleSet:
@@ -152,6 +154,33 @@ class Range:
             else:
                 V.target = self
 
+
+class ParseRec:
+    channel: None #Tcl_Channel: channel;
+    fileName: str
+    cookie: str
+    cookiePos: int
+    binary: bool
+    line : int
+    buf: str
+    s :str
+    shift: list # length of s
+    parsed_s:int
+
+    def __init__(self):
+        self.shift = list(self.s)
+        self.parsed_s = 0
+
+    def readInt(self):
+        if self.parsed_s is []:
+            return TCL_ERROR
+        while self.parsed_s < len(self.shift) and not self.shift[self.parsed_s].isdigit():
+            self.parsed_s += 1
+        shift = int(self.shift[self.parsed_s])
+        if shift != 1:
+            return TCL_ERROR
+        return TCL_OK
+
 def register_example(E: Example, S: ExampleSet):
     E.next = None
     if not S.firstExample:
@@ -277,7 +306,7 @@ def compile_example_set(S: ExampleSet):
 # This parses a list of event numbers 
 # this function copy pasted C function calls; will need to reimplement some of them 
 # used bool for flag; true replaces Tcl_Ok
-def parseEventList(R: ParseRec, eventActive: List[str], num: int) -> bool:
+def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     empty = True
     v, w = 0, 0
     # bzero((void *) eventActive, num)
@@ -286,14 +315,14 @@ def parseEventList(R: ParseRec, eventActive: List[str], num: int) -> bool:
     while R.s[0].isdigit() or R.s[0] == "*":
         empty = False
         if R == "*":
-            for v in range(num):
-                eventActive[v] = True
+            for i in range(num):
+                eventActive[i] = True
         else:
-            if readInt(R, &v)): # ! C functions
+            if R.readInt(): # ! C functions
                 return parseError(R, "error reading event list")
-            if v < 0 or v >= num:
+            elif v < 0 or v >= num:
                 return parseError(R, "event (%d) out of range", v)
-            if stringMatch(R, "-"):
+            elif R = "-":
                 if readInt(R, &w):
                     return parseError(R, "error reading event range")
                 if w <= v or w >= num:
