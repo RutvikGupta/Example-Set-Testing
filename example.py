@@ -139,7 +139,6 @@ class Range:
         # return N;
         # }
 
-
 def initialize_event(V:Event, E:Example):
     S = E.set
     V.example = E
@@ -165,22 +164,22 @@ def register_example(E: Example, S: ExampleSet):
 
 def cleanExample(E: Example):
     i = 0
-    # V = Event()
-    # N, L = Range(), Range()
-    if not Event():
+    V = Event()
+    N, L = Range(), Range()
+    if !E:
         return
     if E.proc:
         Tcl_DecrRefCount(E.proc) #! function 
     if E.event:
         for i in range(E.numEvents):
             V = E.event + i
-            if not V.sharedInputs:
+            if  !V.sharedInputs:
                 L = V.input
                 while L:
                     N = L.next
                     L = N
                     # free 
-            if not V.sharedTargets:
+            if !V.sharedTargets:
                 L = V.target
                 while L:
                     N = L.next
@@ -189,7 +188,8 @@ def cleanExample(E: Example):
             if V.proc:
                 Tcl_DecrRefCount(V.proc) #!
             freeEventExtension(V) #!
-=
+        
+        # free E.event
 
 def clearExample(E: Example):
     E.name = None
@@ -200,4 +200,71 @@ def clearExample(E: Example):
     E.frequency = DEF_E_frequency
     E.probability = 0.0
     E.proc = None
+
+def freeExample(E: Example):
+    if !E: 
+        return
+    # cleanExample(E)
+    # freeExampleExtension(E)
+    # free(E)
+
+# This is used when writing an example file 
+def normalEvent(V: Event, S: ExampleSet) -> bool:
+    if V.proc != None return False
+    if V.maxTime != DEF_V_maxTime return False
+    if V.minTime != DEF_V_minTime return False
+    if V.graceTime != DEF_V_graceTime return False
+    if V.defaultInput != S.defaultInput return False
+    if V.activeInput != S.activeInput return False
+    if V.defaultTarget != S.defaultTarget return False
+    if V.activeTarget != S.activeTarget return False
+    return True 
+
+# def parseError(R: ParseRec, fmt: str, ...) -> bool:
+
+# static flag parseError(ParseRec R, char *fmt, ...) {
+#   char message[256];
+#   va_list args;
+#   if (fmt[0]) {
+#     va_start(args, fmt);
+#     vsprintf(message, fmt, args);
+#     va_end(args);
+#     error("loadExamples: %s on %s %d of file \"%s\"",
+# 	  message, (R->binary) ? "example" : "line", R->line, R->fileName);
+#   }
+#   if (R->channel) closeChannel(R->channel);
+#   R->channel = NULL;
+#   FREE(R->fileName);
+#   freeString(R->buf);
+#   R->buf = NULL;
+
+#   return TCL_ERROR;
+# }
+
+# do we need custom memory management? 
+def freeExampleSet(S: ExampleSet):
+    E, N = Example(), Example()
+    if !S return
+    # free S.name
+    E = S.firstExample
+    while E:
+        N = E.next
+        # freeExample(E)
+        E = N
+    #free S.example
+    #free S.permuted
+    if S.proc:
+        #Tcl_DecrRefCount(S->proc)
+    if S.pipeParser:
+        # parseError(S->pipeParser, "");
+        # free(S->pipeParser);
+    # FREE(S->groupName);
+
+    # freeExSetExtension(S);
+    # free(S);
+
+# This puts all the examples in arrays and does some other calculations 
+def compileExampleSet(S: ExampleSet):
+    E = Example()
+    i, v = 0, 0
 
