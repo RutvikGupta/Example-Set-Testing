@@ -7,16 +7,16 @@ class ExampleSet:
     mode: int # mask
     numExamples: int
     numEvents: int
-    ext: ExSetExt 
+    ext = None #: ExSetExt
     # where is ExSetExt defined?? 
 
-    example: Example
-    permuted: Example
+    example = None #: Example
+    permuted = None #: Example
     currentExampleNum: int
-    currentExample: Example
-    firstExample: Example
-    lastExample: Example
-    pipeExample: Example
+    currentExample = None #: Example
+    firstExample = None #: Example
+    lastExample = None #: Example
+    pipeExample = None #: Example
     pipeParser: ParseRec 
     # whats that ^^
 
@@ -61,37 +61,39 @@ class ExampleSet:
         self.maxGroupNames = 0
         self.groupName = NULL
 
+
 class Example:
     """ example
     """
 
-    name: str
-    num: int
-    numEvents: int
-    event: Event
-    set: ExampleSet
-    next: Example
-    ext: ExampleExt
+    name = None #: str
+    num = 0 # : int
+    numEvents = 0 #: int
+    event = None  #: Event
+    set = None  #: ExampleSet
+    next = None  #: Example
+    ext = None  #: ExampleExt
 
     # float replaces real
     frequency: float
-    probability: float
+    probability = 0.0 #: float
 
     proc: Tcl_Obj
-    # proc function is defined in the C macros 
+
+    # proc function is defined in the C macros
 
     def __init__(self, S: ExampleSet):
-
         self.frequency = DEF_E_frequency
         self.set = S
 
         # initExampleExtension(E)
 
+
 class Event:
     """ event! 
     """
 
-    input: Range
+    input = None #: Range
     sharedInputs: bool # flag
     target: range
     sharedTargets: bool # flag
@@ -107,10 +109,19 @@ class Event:
 
     proc: Tcl_Obj
     example: Example
-    ext: EventExt
+    ext = None #: EventExt
 
-    def __init__(self):
-        pass
+    def __init__(self, E: Example):
+        S = E.set
+        self.example = E
+        self.maxTime = DEF_V_maxTime
+        self.minTime = DEF_V_minTime
+        self.graceTime = DEF_V_graceTime
+        self.defaultInput = S.defaultInput
+        self.activeInput = S.activeInput
+        self.defaultTarget = S.defaultTarget
+        self.activeTarget = S.activeTarget
+        # initEventExtension(V)
 
 
 class Range:
@@ -138,19 +149,6 @@ class Range:
             else:
                 V.target = self
 
-def initialize_event(V:Event, E:Example):
-    S = E.set
-    V.example = E
-    V.maxTime = DEF_V_maxTime
-    V.minTime = DEF_V_minTime
-    V.graceTime = DEF_V_graceTime
-    V.defaultInput = S.defaultInput
-    V.activeInput = S.activeInput
-    V.defaultTarget = S.defaultTarget
-    V.activeTarget = S.activeTarget
-    # initEventExtension(V)
-
-
 def register_example(E: Example, S: ExampleSet):
     E.next = None
     if not S.firstExample:
@@ -165,16 +163,16 @@ def register_example(E: Example, S: ExampleSet):
 
 def clean_example(E: Example):
     i = 0
-    V = Event()
-    N, L = Range(), Range()
-    if !E:
+    # V = Event()
+    # N, L = Range(), Range()
+    if not E:
         return
     if E.proc:
-        Tcl_DecrRefCount(E.proc) #! function 
+        Tcl_DecrRefCount(E.proc)  # ! function
     if E.event:
         for i in range(E.numEvents):
             V = E.event + i
-            if  !V.sharedInputs:
+            if not V.sharedInputs:
                 L = V.input
                 while L:
                     N = L.next
@@ -185,8 +183,8 @@ def clean_example(E: Example):
                     N = L.next
                     L = N
             if V.proc:
-                Tcl_DecrRefCount(V.proc) #!
-            freeEventExtension(V) #!
+                Tcl_DecrRefCount(V.proc)  # !
+            freeEventExtension(V)  # !
 
 def clearExample(E: Example):
     E.name = None
@@ -198,24 +196,26 @@ def clearExample(E: Example):
     E.probability = 0.0
     E.proc = None
 
-def freeExample(E: Example):
-    if !E: 
-        return
-    # cleanExample(E)
-    # freeExampleExtension(E)
-    # free(E)
-
 # This is used when writing an example file 
 def normalEvent(V: Event, S: ExampleSet) -> bool:
-    if V.proc != None return False
-    if V.maxTime != DEF_V_maxTime return False
-    if V.minTime != DEF_V_minTime return False
-    if V.graceTime != DEF_V_graceTime return False
-    if V.defaultInput != S.defaultInput return False
-    if V.activeInput != S.activeInput return False
-    if V.defaultTarget != S.defaultTarget return False
-    if V.activeTarget != S.activeTarget return False
-    return True 
+    if V.proc is None:
+        return False
+    elif not V.maxTime is DEF_V_maxTime:
+        return False
+    elif not V.minTime is DEF_V_minTime:
+        return False
+    elif not V.graceTime is DEF_V_graceTime:
+        return False
+    elif not V.defaultInput is S.defaultInput:
+        return False
+    elif not V.activeInput is S.activeInput:
+        return False
+    elif not V.defaultTarget is S.defaultTarget:
+        return False
+    elif not V.activeTarget is S.activeTarget:
+        return False
+    else:
+        return True
 
 # def parseError(R: ParseRec, fmt: str, ...) -> bool:
 
@@ -241,7 +241,8 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
 # do we need custom memory management? 
 def freeExampleSet(S: ExampleSet):
     E, N = Example(), Example()
-    if !S return
+    if not S:
+        return
     # free S.name
     E = S.firstExample
     while E:

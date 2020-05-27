@@ -4,20 +4,20 @@ class ExampleSet:
     name: str
     num: int
     # need python mask
-    mode: mask
+    mode: int
     numExamples: int
     numEvents: int
-    ext: ExSetExt 
+    ext = None #: ExSetExt
     # where is ExSetExt defined?? 
 
-    example: Example
-    permuted: Example
+    example = None #: Example
+    permuted = None #: Example
     currentExampleNum: int
-    currentExample: Example
-    firstExample: Example
-    lastExample: Example
-    pipeExample: Example
-    pipeParser: ParseRec 
+    currentExample = None #: Example
+    firstExample = None #: Example
+    lastExample = None #: Example
+    pipeExample = None #: Example
+    pipeParser = None #: ParseRec
     # whats that ^^
 
     pipeLoop: bool # flag
@@ -101,7 +101,7 @@ class Event:
     minTime: float
     graceTime: float
     defaultInput: float
-    DEF_S_activeInput: float
+    activeInput: float
     defaultTarget: float
     activeTarget: float
 
@@ -128,15 +128,15 @@ class Range:
 
     def __init__(self, V: Event, L: Range, doing_inputs: bool):
         pass
-        # python flags?
-        # Range newRange(Event V, Range L, flag doingInputs) {
-        # Range N = (Range) safeCalloc(1, sizeof(struct range), "newRange:N");
-        # N->value = (doingInputs) ? V->activeInput : V->activeTarget;
-        # if (L) L->next = N;
-        # else {
-        #     if (doingInputs) V->input = N;
-        #     else V->target = N;
-        # }
-        # return N;
-        # }
+        if doing_inputs:
+            self.value = V.activeInput
+        else:
+            self.value = V.activeTarget
+        if L:
+            L.next = self
+        else:
+            if doing_inputs:
+                V.input = self
+            else:
+                V.target = self
 
