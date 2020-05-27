@@ -179,12 +179,7 @@ def clean_example(E: Example):
                 while L:
                     N = L.next
                     L = N
-<<<<<<< HEAD
-                    # free 
-            if !V.sharedTargets:
-=======
             if not V.sharedTargets:
->>>>>>> f24f8f74160b7353a8b2f0fb09cd78861675413a
                 L = V.target
                 while L:
                     N = L.next
@@ -192,12 +187,6 @@ def clean_example(E: Example):
             if V.proc:
                 Tcl_DecrRefCount(V.proc) #!
             freeEventExtension(V) #!
-<<<<<<< HEAD
-        
-        # free E.event
-=======
-
->>>>>>> f24f8f74160b7353a8b2f0fb09cd78861675413a
 
 def clearExample(E: Example):
     E.name = None
