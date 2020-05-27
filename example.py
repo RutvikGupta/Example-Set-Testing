@@ -165,39 +165,28 @@ def register_example(E: Example, S: ExampleSet):
 
 def clean_example(E: Example):
     i = 0
-    V = Event()
-    N, L = Range(), Range()
-    if !E:
+    # V = Event()
+    # N, L = Range(), Range()
+    if not Event():
         return
     if E.proc:
-        Tcl_DecrRefCount(E.proc) #! function 
+        Tcl_DecrRefCount(E.proc)  # ! function
     if E.event:
         for i in range(E.numEvents):
             V = E.event + i
-            if  !V.sharedInputs:
+            if not V.sharedInputs:
                 L = V.input
                 while L:
                     N = L.next
                     L = N
-<<<<<<< HEAD
-                    # free 
-            if !V.sharedTargets:
-=======
             if not V.sharedTargets:
->>>>>>> f24f8f74160b7353a8b2f0fb09cd78861675413a
                 L = V.target
                 while L:
                     N = L.next
                     L = N
             if V.proc:
-                Tcl_DecrRefCount(V.proc) #!
-            freeEventExtension(V) #!
-<<<<<<< HEAD
-        
-        # free E.event
-=======
-
->>>>>>> f24f8f74160b7353a8b2f0fb09cd78861675413a
+                Tcl_DecrRefCount(V.proc)  # !
+            freeEventExtension(V)  # !
 
 def clearExample(E: Example):
     E.name = None
@@ -209,24 +198,26 @@ def clearExample(E: Example):
     E.probability = 0.0
     E.proc = None
 
-def freeExample(E: Example):
-    if !E: 
-        return
-    # cleanExample(E)
-    # freeExampleExtension(E)
-    # free(E)
-
 # This is used when writing an example file 
 def normalEvent(V: Event, S: ExampleSet) -> bool:
-    if V.proc != None return False
-    if V.maxTime != DEF_V_maxTime return False
-    if V.minTime != DEF_V_minTime return False
-    if V.graceTime != DEF_V_graceTime return False
-    if V.defaultInput != S.defaultInput return False
-    if V.activeInput != S.activeInput return False
-    if V.defaultTarget != S.defaultTarget return False
-    if V.activeTarget != S.activeTarget return False
-    return True 
+    if V.proc is None:
+        return False
+    elif not V.maxTime is DEF_V_maxTime:
+        return False
+    elif not V.minTime is DEF_V_minTime:
+        return False
+    elif not V.graceTime is DEF_V_graceTime:
+        return False
+    elif not V.defaultInput is S.defaultInput:
+        return False
+    elif not V.activeInput is S.activeInput:
+        return False
+    elif not V.defaultTarget is S.defaultTarget:
+        return False
+    elif not V.activeTarget is S.activeTarget:
+        return False
+    else:
+        return True
 
 # def parseError(R: ParseRec, fmt: str, ...) -> bool:
 
