@@ -22,8 +22,7 @@ class ExampleSet:
     firstExample = None #: Example
     lastExample = None #: Example
     pipeExample = None #: Example
-    pipeParser: ParseRec 
-    # whats that ^^
+    pipeParser = None # ParseRec
 
     pipeLoop: bool # flag
     # whats python eq for flag? 
@@ -163,23 +162,22 @@ class ParseRec:
     binary: bool
     line : int
     buf: str
-    s :str
+    s: str
     shift: list # length of s
-    parsed_s:int
+    parsed_s: int
 
     def __init__(self):
         self.shift = list(self.s)
         self.parsed_s = 0
 
-    def readInt(self):
+    def readInt(self, parsed_list: list):
         if self.parsed_s is []:
             return TCL_ERROR
         while self.parsed_s < len(self.shift) and not self.shift[self.parsed_s].isdigit():
             self.parsed_s += 1
-        shift = int(self.shift[self.parsed_s])
-        if shift != 1:
-            return TCL_ERROR
+        parsed_list.append(int(self.shift[self.parsed_s]))
         return TCL_OK
+
 
 def register_example(E: Example, S: ExampleSet):
     E.next = None
@@ -302,36 +300,46 @@ def compile_example_set(S: ExampleSet):
 
     # what is Tcl Cmd info?
 
+# def parseError(R: ParseRec, fmt: str):
+#     va_list args;
+#     if (fmt[0]) {
+#     va_start(args, fmt);
+#     vsprintf(message, fmt, args);
+#     va_end(args);
+#     error("loadExamples: %s on %s %d of file \"%s\"", message, (R->binary) ? "example" : "line", R/line, R.fileName)
+#     if R.channel:
+#         # closeChannel(R.channel) <- dont need this currently
+#         R.buf = None
+#     return TCL_ERROR;
 
 # This parses a list of event numbers 
 # this function copy pasted C function calls; will need to reimplement some of them 
 # used bool for flag; true replaces Tcl_Ok
 def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     empty = True
-    v, w = 0, 0
+    lst = []
     # bzero((void *) eventActive, num)
-
     # skipBlank(R)
     while R.s[0].isdigit() or R.s[0] == "*":
         empty = False
-        if R == "*":
+        if R.s == "*":
             for i in range(num):
                 eventActive[i] = True
         else:
-            if R.readInt(): # ! C functions
+            if R.readInt(lst): # ! C functions
                 return parseError(R, "error reading event list")
-            elif v < 0 or v >= num:
-                return parseError(R, "event (%d) out of range", v)
-            elif R = "-":
-                if readInt(R, &w):
+            elif lst[-1] < 0 or lst[-1] >= num:
+                return parseError(R, "event (%d) out of range", lst[-1])
+            elif R.s is "-":
+                if R.readInt(lst):
                     return parseError(R, "error reading event range")
-                if w <= v or w >= num:
-                    return parseError(R, "event (%d) out of range", w)
+                if lst[-1] <= lst[-2] or lst[-1] >= num:
+                    return parseError(R, "event (%d) out of range", lst[-1])
             else:
-                w = v
-            while v <= w:
-                eventActive[v] = True
-                v += 1
+                lst[-1] = lst[-2]
+            while lst[-2] <= lst[-1]:
+                eventActive[lst[-2]] = True
+                lst[-1] += 1
         # skipBlank(R)
     if empty:
         for v in range(num):
