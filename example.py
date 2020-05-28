@@ -371,3 +371,16 @@ def register_group_name(name: str, S: ExampleSet) -> str:
         S.groupName[S.numGroupNames] = name
     return S.groupName[i]
     
+def readEventRanges(V: Event, S: ExampleSet, R: ParseRec, 
+			    doingInputs: bool, sparseMode: bool):
+    L = None
+    done = False
+
+    maxUnits, maxvals = 2, 2
+    unit = []
+    val = []
+
+    # the rest    do{}
+    # TODO
+
+
