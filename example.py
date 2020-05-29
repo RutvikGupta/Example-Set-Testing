@@ -1,6 +1,8 @@
 from typing import List, Dict, Tuple
+
 TCL_ERROR = False
 TCL_OK = True
+import example_defaults
 
 
 class ExampleSet:
@@ -9,22 +11,22 @@ class ExampleSet:
     name: str
     num: int
     # need python mask
-    mode: int # mask
+    mode: int  # mask
     numExamples: int
     numEvents: int
-    ext = None #: ExSetExt
+    ext = None  #: ExSetExt
     # where is ExSetExt defined?? 
 
-    example = None #: Example
-    permuted = None #: Example
+    example = None  #: Example
+    permuted = None  #: Example
     currentExampleNum: int
-    currentExample = None #: Example
-    firstExample = None #: Example
-    lastExample = None #: Example
-    pipeExample = None #: Example
-    pipeParser = None # ParseRec
+    currentExample = None  #: Example
+    firstExample = None  #: Example
+    lastExample = None  #: Example
+    pipeExample = None  #: Example
+    pipeParser = None  # ParseRec
 
-    pipeLoop: bool # flag
+    pipeLoop: bool  # flag
     # whats python eq for flag? 
     pipeExampleNum: int
 
@@ -39,11 +41,11 @@ class ExampleSet:
     defaultTarget: float
     activeTarget: float
     # int replaces short
-    numGroupNames: short #hidden
-    maxGroupNames: short #hidden
-    groupName: list #hidden
+    numGroupNames: short  # hidden
+    maxGroupNames: short  # hidden
+    groupName: list  # hidden
 
-    #what are flags and how to translate? 
+    # what are flags and how to translate?
 
     # flag     (*loadEvent)(Event V);
     # flag     (*loadExample)(Example E);
@@ -51,14 +53,14 @@ class ExampleSet:
 
     def __init__(self, name: str):
         self.name = name
-        self.pipeLoop = DEF_S_pipeLoop
-        self.maxTime = DEF_S_maxTime
-        self.minTime = DEF_S_minTime
-        self.graceTime = DEF_S_graceTime
-        self.defaultInput = DEF_S_defaultInput
-        self.activeInput = DEF_S_activeInput
-        self.defaultTarget = DEF_S_defaultTarget
-        self.activeTarget = DEF_S_activeTarget
+        self.pipeLoop = example_defaults.DEF_S_pipeLoop
+        self.maxTime = example_defaults.DEF_S_maxTime
+        self.minTime = example_defaults.DEF_S_minTime
+        self.graceTime = example_defaults.DEF_S_graceTime
+        self.defaultInput = example_defaults.DEF_S_defaultInput
+        self.activeInput = example_defaults.DEF_S_activeInput
+        self.defaultTarget = example_defaults.DEF_S_defaultTarget
+        self.activeTarget = example_defaults.DEF_S_activeTarget
         self.loadEvent = standardLoadEvent
         self.loadExample = standardLoadExample
         self.numGroupNames = 0
@@ -70,9 +72,9 @@ class Example:
     """ example
     """
 
-    name = None #: str
-    num = 0 # : int
-    numEvents = 0 #: int
+    name = None  #: str
+    num = 0  # : int
+    numEvents = 0  #: int
     event = None  #: Event
     set = None  #: ExampleSet
     next = None  #: Example
@@ -80,14 +82,14 @@ class Example:
 
     # float replaces real
     frequency: float
-    probability = 0.0 #: float
+    probability = 0.0  #: float
 
     proc: Tcl_Obj
 
     # proc function is defined in the C macros
 
     def __init__(self, S: ExampleSet):
-        self.frequency = DEF_E_frequency
+        self.frequency = example_defaults.DEF_E_frequency
         self.set = S
 
         # initExampleExtension(E)
@@ -97,11 +99,11 @@ class Event:
     """ event! 
     """
 
-    input = None #: Range
-    sharedInputs: bool # flag
+    input = None  #: Range
+    sharedInputs: bool  # flag
     target: range
-    sharedTargets: bool # flag
-    
+    sharedTargets: bool  # flag
+
     # float = real
     maxTime: float
     minTime: float
@@ -113,14 +115,14 @@ class Event:
 
     proc: Tcl_Obj
     example: Example
-    ext = None #: EventExt
+    ext = None  #: EventExt
 
     def __init__(self, E: Example):
         S = E.set
         self.example = E
-        self.maxTime = DEF_V_maxTime
-        self.minTime = DEF_V_minTime
-        self.graceTime = DEF_V_graceTime
+        self.maxTime = example_defaults.DEF_V_maxTime
+        self.minTime = example_defaults.DEF_V_minTime
+        self.graceTime = example_defaults.DEF_V_graceTime
         self.defaultInput = S.defaultInput
         self.activeInput = S.activeInput
         self.defaultTarget = S.defaultTarget
@@ -131,14 +133,14 @@ class Event:
 class Range:
     """range"""
 
-    groupName: str          # If null, unit offsets are for the net
+    groupName: str  # If null, unit offsets are for the net
     numUnits: int
-    firstUnit: int          # Only used for dense encodings
+    firstUnit: int  # Only used for dense encodings
     # float replaces real
-    val: float              # Only used for dense encodings
+    val: float  # Only used for dense encodings
 
-    value: float            # Only used for sparse encodings
-    unit: int               # Only used for sparse encodings
+    value: float  # Only used for sparse encodings
+    unit: int  # Only used for sparse encodings
 
     def __init__(self, V: Event, doing_inputs: bool, L=None):
         if doing_inputs:
@@ -155,15 +157,15 @@ class Range:
 
 
 class ParseRec:
-    channel: None #Tcl_Channel: channel;
+    channel: None  # Tcl_Channel: channel;
     fileName: str
     cookie: str
     cookiePos: int
     binary: bool
-    line : int
+    line: int
     buf: str
     s: str
-    shift: list # length of s
+    shift: list  # length of s
     parsed_s: int
 
     def __init__(self):
@@ -216,25 +218,27 @@ def clean_example(E: Example):
                 Tcl_DecrRefCount(V.proc)  # !
             freeEventExtension(V)  # !
 
+
 def clearExample(E: Example):
     E.name = None
     E.num = 0
     E.numEvents = 0
     E.event = None
     E.next = None
-    E.frequency = DEF_E_frequency
+    E.frequency = example_defaults.DEF_E_frequency
     E.probability = 0.0
     E.proc = None
 
-# This is used when writing an example file 
+
+# This is used when writing an example file
 def normalEvent(V: Event, S: ExampleSet) -> bool:
     if V.proc is None:
         return False
-    elif not V.maxTime is DEF_V_maxTime:
+    elif not V.maxTime is example_defaults.DEF_V_maxTime:
         return False
-    elif not V.minTime is DEF_V_minTime:
+    elif not V.minTime is example_defaults.DEF_V_minTime:
         return False
-    elif not V.graceTime is DEF_V_graceTime:
+    elif not V.graceTime is example_defaults.DEF_V_graceTime:
         return False
     elif not V.defaultInput is S.defaultInput:
         return False
@@ -246,6 +250,7 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
         return False
     else:
         return True
+
 
 # def parseError(R: ParseRec, fmt: str, ...) -> bool:
 
@@ -294,11 +299,14 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
 #
 
 """This puts all the examples in arrays and does some other calculations"""
+
+
 def compile_example_set(S: ExampleSet):
     E = Example()
     i, v = 0, 0
 
     # what is Tcl Cmd info?
+
 
 # def parseError(R: ParseRec, fmt: str):
 #     va_list args;
@@ -326,7 +334,7 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
             for i in range(num):
                 eventActive[i] = True
         else:
-            if R.readInt(lst): # ! C functions
+            if R.readInt(lst):  # ! C functions
                 return parseError(R, "error reading event list")
             elif lst[-1] < 0 or lst[-1] >= num:
                 return parseError(R, "event (%d) out of range", lst[-1])
@@ -374,13 +382,14 @@ def register_group_name(name: str, S: ExampleSet) -> str:
             S.maxGroupNames = 16
         elif i == S.maxGroupNames:
             S.maxGroupNames *= 2
-      
+
         S.numGroupNames += 1
         S.groupName[S.numGroupNames] = name
     return S.groupName[i]
-    
-def readEventRanges(V: Event, S: ExampleSet, R: ParseRec, 
-			    doingInputs: bool, sparseMode: bool):
+
+
+def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
+                    doingInputs: bool, sparseMode: bool):
     L = None
     done = False
 
@@ -390,5 +399,3 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
 
     # the rest    do{}
     # TODO
-
-
