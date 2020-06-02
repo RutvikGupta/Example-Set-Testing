@@ -388,14 +388,23 @@ def register_group_name(name: str, S: ExampleSet) -> str:
     return S.groupName[i]
 
 
-def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
-                    doingInputs: bool, sparseMode: bool):
-    L = None
-    done = False
+# def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
+#                     doingInputs: bool, sparseMode: bool):
+#     L = None
+#     done = False
+#
+#     maxUnits, maxvals = 2, 2
+#     unit = []
+#     val = []
+#
+#     # the rest    do{}
+#     # TODO
 
-    maxUnits, maxvals = 2, 2
-    unit = []
-    val = []
-
-    # the rest    do{}
-    # TODO
+"""/* This parses a text example */"""
+def read_example(E: Example, R: ParseRec):
+  eventActive = ""
+  V = Event(E)
+  W = Event(E)
+  S = E.set
+  inputsSeen, targetsSeen, done = True
+  v, w, nextInputEvent, nextTargetEvent = 0
