@@ -5,6 +5,7 @@ TCL_OK = True
 import example_defaults
 
 
+
 class ExampleSet:
     """ set of examples linked list
     """
@@ -66,6 +67,34 @@ class ExampleSet:
         self.numGroupNames = 0
         self.maxGroupNames = 0
         self.groupName = []
+
+
+class Root:
+    """
+    class consisting of list of initialized exampleSet
+    """
+    num_example_set = 0
+    set: List[ExampleSet]
+
+    def __init__(self):
+        self.set = []
+
+    """/ *returns the root that contains name * /
+    / *what is Root? * / """
+    def lookupExampleSet(self, name: str):
+        for s in range(self.num_example_set):
+            if self.set[s].name == name:
+                return self.set[s]
+        return None
+
+    """/ *Stores a link to the set in the Root set table. Assumes set with same name is not there already * /
+    """
+    def registerExampleSet(self, S: ExampleSet):
+        self.num_example_set += 1
+        S.num = self.num_example_set - 1
+        self.set[S.num] = S
+        # eval("catch {.initExSet root.set(%d)}", S->num);
+        # signalSetListsChanged();
 
 
 class Example:
@@ -161,7 +190,6 @@ class ParseRec:
     fileName: str
     cookie: str
     cookiePos: int
-    binary: bool
     line: int
     buf: str
     s: str
@@ -252,26 +280,11 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
         return True
 
 
-# def parseError(R: ParseRec, fmt: str, ...) -> bool:
+"""Prints an error message and returns TCL_ERROR"""
+def parseError(R: ParseRec, fmt: str) -> bool:
+    print("loadExample: " + fmt + "on " + "line " + str(R.line) + " of file " + R.fileName)
+    return TCL_ERROR
 
-# static flag parseError(ParseRec R, char *fmt, ...) {
-#   char message[256];
-#   va_list args;
-#   if (fmt[0]) {
-#     va_start(args, fmt);
-#     vsprintf(message, fmt, args);
-#     va_end(args);
-#     error("loadExamples: %s on %s %d of file \"%s\"",
-# 	  message, (R->binary) ? "example" : "line", R->line, R->fileName);
-#   }
-#   if (R->channel) closeChannel(R->channel);
-#   R->channel = NULL;
-#   FREE(R->fileName);
-#   freeString(R->buf);
-#   R->buf = NULL;
-
-#   return TCL_ERROR;
-# }
 
 """Not sure but we dont need this code even """
 # # do we need custom memory management?
@@ -308,21 +321,10 @@ def compile_example_set(S: ExampleSet):
     # what is Tcl Cmd info?
 
 
-# def parseError(R: ParseRec, fmt: str):
-#     va_list args;
-#     if (fmt[0]) {
-#     va_start(args, fmt);
-#     vsprintf(message, fmt, args);
-#     va_end(args);
-#     error("loadExamples: %s on %s %d of file \"%s\"", message, (R->binary) ? "example" : "line", R/line, R.fileName)
-#     if R.channel:
-#         # closeChannel(R.channel) <- dont need this currently
-#         R.buf = None
-#     return TCL_ERROR;
+"""This parses a list of event numbers 
+# used bool for flag; true replaces Tcl_Ok"""
 
-# This parses a list of event numbers 
-# this function copy pasted C function calls; will need to reimplement some of them 
-# used bool for flag; true replaces Tcl_Ok
+
 def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     empty = True
     lst = []
@@ -337,12 +339,12 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
             if R.readInt(lst):  # ! C functions
                 return parseError(R, "error reading event list")
             elif lst[-1] < 0 or lst[-1] >= num:
-                return parseError(R, "event (%d) out of range", lst[-1])
+                return parseError(R, "event" + str(lst[-1]) + " out of range")
             elif R.s is "-":
                 if R.readInt(lst):
                     return parseError(R, "error reading event range")
                 if lst[-1] <= lst[-2] or lst[-1] >= num:
-                    return parseError(R, "event (%d) out of range", lst[-1])
+                    return parseError(R, "event" + str(lst[-1]) + " out of range")
             else:
                 lst[-1] = lst[-2]
             while lst[-2] <= lst[-1]:
@@ -400,11 +402,22 @@ def register_group_name(name: str, S: ExampleSet) -> str:
 #     # the rest    do{}
 #     # TODO
 
-"""/* This parses a text example */"""
+def abort(S: ExampleSet, E: Example):
+    R = Root()
+    # if S:
+    #     if R.lookupExampleSet(S.name):
+    #         compileExampleSet(S);
+    # if E:
+    #     freeExample(E)
+    return TCL_ERROR
+
+
+"""/* This parses a text example */
+"""
 def read_example(E: Example, R: ParseRec):
-  eventActive = ""
-  V = Event(E)
-  W = Event(E)
-  S = E.set
-  inputsSeen, targetsSeen, done = True
-  v, w, nextInputEvent, nextTargetEvent = 0
+    eventActive = ""
+    V = Event(E)
+    W = Event(E)
+    S = E.set
+    inputsSeen, targetsSeen, done = True
+    v, w, nextInputEvent, nextTargetEvent = 0
