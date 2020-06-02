@@ -31,7 +31,7 @@ class ExampleSet:
     # whats python eq for flag? 
     pipeExampleNum: int
 
-    # Tcl_Obj defined in C macro in example.h 
+    # Tcl_Obj defined as C macro in example.h
     proc: Tcl_Obj
     chooseExample: Tcl_Obj
     maxTime: float
@@ -42,8 +42,8 @@ class ExampleSet:
     defaultTarget: float
     activeTarget: float
     # int replaces short
-    numGroupNames: short  # hidden
-    maxGroupNames: short  # hidden
+    numGroupNames: int  # hidden
+    maxGroupNames: int  # hidden
     groupName: list  # hidden
 
     # what are flags and how to translate?
@@ -201,7 +201,7 @@ class ParseRec:
         self.parsed_s = 0
 
     def readInt(self, parsed_list: list):
-        if self.parsed_s is []:
+        if self.shift is []:
             return TCL_ERROR
         while self.parsed_s < len(self.shift) and not self.shift[self.parsed_s].isdigit():
             self.parsed_s += 1
@@ -390,15 +390,22 @@ def register_group_name(name: str, S: ExampleSet) -> str:
     return S.groupName[i]
 
 
-# def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
-#                     doingInputs: bool, sparseMode: bool):
-#     L = None
-#     done = False
-#
-#     maxUnits, maxvals = 2, 2
-#     unit = []
-#     val = []
-#
+def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
+                    doingInputs: bool, sparseMode: bool):
+    L = None
+    done = False
+
+    maxUnits, maxvals = 2, 2
+    units = 0
+    val = 0.0
+    # if stringMatch(R, "{":
+    # tidyUpRange(L, unit, val, sparseMode);
+    # L = newRange(V, L, doingInputs);
+    # while (!stringMatch(R, "}")) {
+    # if (isNumber(R)) {
+    # if (readReal(R, & L->value)) {
+    # parseError(R, "couldn't read sparse active value");
+
 #     # the rest    do{}
 #     # TODO
 
