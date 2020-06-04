@@ -967,3 +967,33 @@ def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
             # deleteExampleSet(S);
             return TCL_ERROR
     return  # result(setName)
+
+
+"""/ *This puts all the examples in arrays and does some other calculations * /"""
+def compileExampleSet(S: ExampleSet):
+    E = Example(S)
+    i, v = 0, 0
+    totalFreq = 0.0
+    scale, sum = 0.0, 0.0
+    # struct Tcl_CmdInfo junk;
+    # / *Count the number of examples and events * /
+    S.numExamples = 0
+    S.numEvents = 0
+    E = S.firstExample
+    while E:
+        S.numEvents += E.numEvents
+        E = E.next
+        S.numExamples += 1
+
+    # / * Build the example and permuted arrays * /
+    S.example = []
+    S.permuted = []
+    # / * Fill the arrays and call the user-defined init procedures on each example and event * /
+    i = 0
+    E = S.firstExample
+    while E:
+        S.example[i], S.permuted[i] = E, E
+        E.num = i
+        totalFreq += E.frequency
+        E = E.next
+        i += 1
