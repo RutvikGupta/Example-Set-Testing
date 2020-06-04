@@ -457,6 +457,7 @@ def register_group_name(name: str, S: ExampleSet) -> str:
         S.groupName[S.numGroupNames] = name
     return S.groupName[i]
 
+#TODO
 
 # def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
 #                     doingInputs: bool, sparseMode: bool):
@@ -614,229 +615,111 @@ def read_example(E: Example, R: ParseRec):
           else:
             parseError(R, "something unexpected (%s) in event header", R.s)
             goto abort
-            
+      elif stringPeek(R, "I:") or stringPeek(R, "i:") or stringPeek(R, "T:") or \
+        stringPeek(R, "t:") or stringPeek(R "B:") or stringPeek(R, "b:"):
+        sparseMode, doingInputs, doingTargets = False, False, False
+        I, T = None
 
-	else {
-	  parseError(R, "something unexpected (%s) in event header", 
-		     R->s);
-	  goto abort;}
-      }
-      inputsSeen = targetsSeen = FALSE;
-    }
+        case = R.s[0]
 
-    else if (stringPeek(R, "I:") || stringPeek(R, "i:") ||
-	     stringPeek(R, "T:") || stringPeek(R, "t:") ||
-	     stringPeek(R, "B:") || stringPeek(R, "b:")) {
-      flag sparseMode = FALSE, doingInputs = FALSE, doingTargets = FALSE;
-      Event I = NULL, T = NULL;
-      switch(R->s[0]) {
-      case 'I': 
-	sparseMode = FALSE; doingInputs = TRUE;  doingTargets = FALSE; break;
-      case 'i': 
-	sparseMode = TRUE;  doingInputs = TRUE;  doingTargets = FALSE; break;
-      case 'T': 
-	sparseMode = FALSE; doingInputs = FALSE; doingTargets = TRUE;  break;
-      case 't': 
-	sparseMode = TRUE;  doingInputs = FALSE; doingTargets = TRUE;  break;
-      case 'B': 
-	sparseMode = FALSE; doingInputs = TRUE;  doingTargets = TRUE;  break;
-      case 'b': 
-	sparseMode = TRUE;  doingInputs = TRUE;  doingTargets = TRUE;  break;
-      }
-      R->s += 2;
-      
-      if (doingInputs) {
-	if (inputsSeen) {
-	  /* Inputs have already been given since the last event list */
-	  if (nextInputEvent >= E->numEvents) {
-	    parseError(R, "attempted to specify inputs for event %d", 
-		       nextInputEvent); goto abort;}
-	  I = E->event + nextInputEvent++;
-	} else {
-	  /* This will apply to the active events */
-	  for (v = 0; v < E->numEvents && !I; v++)
-	    if (eventActive[v]) I = E->event + v--;
-	  if (!I) {parseError(R, "no events specified"); goto abort;}
-	  if (I->input) {parseError(R, "multiple inputs given for event %d", 
-				    v); goto abort;}
-	}
-      }
-      if (doingTargets) {
-	if (targetsSeen) {
-	  /* Targets have already been given since the last event list */
-	  if (nextTargetEvent >= E->numEvents) {
-	    parseError(R, "attempted to specify targets for event %d", 
-		       nextTargetEvent); goto abort;}
-	  T = E->event + nextTargetEvent++;
-	} else {
-	  /* This will apply to the active events */
-	  for (v = 0; v < E->numEvents && !T; v++)
-	    if (eventActive[v]) T = E->event + v--;
-	  if (!T) {parseError(R, "no events specified"); goto abort;}
-	  if (T->target) {parseError(R, "multiple targets given for event %d", 
-				     v); goto abort;}
-	}
-      }
+        if case == 'I':
+          sparseMode, doingInputs, doingTargets = False, True, False 
+        if case == 'i':
+          sparseMode, doingInputs, doingTargets = True, True, False
+        if case == 'T':
+          sparseMode, doingInputs, doingTargets = False, False, True 
+        if case == 't':
+          sparseMode, doingInputs, doingTargets = True, False, True   
+        if case == 'B':
+          sparseMode, doingInputs, doingTargets = False, True, True     
+        if case == 'b':
+          sparseMode, doingInputs, doingTargets = True, True, True   
 
-      V = (I) ? I : T;
-      if (readEventRanges(V, S, R, (V == I), sparseMode)) goto abort;
+        R.s += 2
+        
+        if doingInputs:
+          if inputsSeen:
+            # /* Inputs have already been given since the last event list */
+            if nextInputEvent >= E.numEvents:
+              parseError(R, "attempted to specify inputs for event %d", nextInputEvent)
+              goto abort
+            I = E.event + nextInputEvent
+            nextInputEvent += 1
+          else:
+            #  /* This will apply to the active events */
+            for v in range(E.numEvents):
+              if eventActive[v]: 
+                I = E.event
+                v -= 1
+            if not I:
+              parseError(R, "no events specified")
+              goto abort
+            if I.input:
+              parseError(R, "multiple inputs given for event %d", v)
+              goto abort
+        if doingTargets:
+          if targetsSeen:
+            #  /* Targets have already been given since the last event list */
+            if nextTargetEvent >= E.numEvents:
+              parseError(R, "attempted to specify targets for event %d", nextTargetEvent)
+              goto abort
+            T = E.event + nextTargetEvent
+            nextTargetEvent += 1
+        else:
+          # /* This will apply to the active events */
+          for v in range(E.numEvents):
+            if eventActive[v]:
+              T = E.event + v
+              v -= 1
+          if not T:
+            parseError(R, "no events specified")
+            goto abort
+          if T.target:
+            parseError(R, "multiple targets given for event %d", v)
+            goto abort
+        
+        #TODO 
+        # what does this syntax mean in C? replace this line
+        V = (I) ? I : T
 
-      if (I && T) {
-	if (T->target) {
-	  parseError(R, "multiple targets specified for event %d", 
-		     (targetsSeen) ? nextTargetEvent - 1: v);
-	  goto abort;}
-	T->target = I->input;
-	T->sharedTargets = TRUE;
-      }
+        if readEventRanges(V, S, R, V==I, sparseMode):
+          goto abort
+        if I and T:
+          if T.target:
+            parseError(R, "multiple targets specified for event %d", \
+		          (targetsSeen) ? nextTargetEvent - 1: v)
+            goto abort
+          T.target = I.input
+          T.sharedTargets = True
+        if doingInputs and not inputsSeen:
+          for w in range(v+1, E.numEvents):
+            if eventActive[w]:
+              W = E.event + w
+              if W.input:
+                parseError(R, "multiple inputs given for event %d", w)
+                goto abort
+              W.input = I.input
+              W.sharedInputs = True
 
-      if (doingInputs && !inputsSeen) {
-	for (w = v + 1; w < E->numEvents; w++)
-	  if (eventActive[w]) {
-	    W = E->event + w;
-	    if (W->input) {
-	      parseError(R, "multiple inputs given for event %d", w);
-	      goto abort;}
-	    W->input = I->input;
-	    W->sharedInputs = TRUE;
-	  }
-	for (w = nextInputEvent; w < E->numEvents; w++)
-	  if (eventActive[w]) nextInputEvent = w + 1;
-	inputsSeen = TRUE;
-      }
-      if (doingTargets && !targetsSeen) {
-	for (w = v + 1; w < E->numEvents; w++)
-	  if (eventActive[w]) {
-	    W = E->event + w;
-	    if (W->target) {
-	      parseError(R, "multiple targets given for event %d", w);
-	      goto abort;}
-	    W->target = T->target;
-	    W->sharedTargets = TRUE;
-	  }
-	for (w = nextTargetEvent; w < E->numEvents; w++)
-	  if (eventActive[w]) nextTargetEvent = w + 1;
-	targetsSeen = TRUE;
-      }
-    }
-
-
-#ifdef JUNK
-    /* Read inputs */
-    else if (stringPeek(R, "I:") || stringPeek(R, "i:")) {
-      if (stringMatch(R, "I:")) sparseMode = FALSE;
-      else {
-	stringMatch(R, "i:");
-	sparseMode = TRUE;
-      }
-      
-      /* Figure out which events the inputs are being specified for */
-      if (inputsSeen) { 
-	/* Inputs have already been given since the last event list */
-	if (nextInputEvent >= E->numEvents) {
-	  parseError(R, "attempted to specify inputs for event %d", 
-		     nextInputEvent);
-	  goto abort;}
-	V = E->event + nextInputEvent++;
-	usingActive = FALSE;
-      } else {
-	/* This will apply to the active events */
-	for (v = 0, V = NULL; v < E->numEvents && !V; v++)
-	  if (eventActive[v]) V = E->event + v--;
-	if (!V) {
-	  parseError(R, "no events specified");
-	  goto abort;}
-	usingActive = TRUE;
-      }
-      if (V->input) {
-	parseError(R, "multiple inputs specified for event %d", v);
-	goto abort;}
-
-      if (readEventRanges(V, S, R, TRUE, sparseMode)) goto abort;
-      
-      if (usingActive) {
-	for (w = v + 1; w < E->numEvents; w++)
-	  if (eventActive[w]) {
-	    W = E->event + w;
-	    if (W->input) {
-	      parseError(R, "multiple inputs specified for event %d", w);
-	      goto abort;}
-	    W->input = V->input;
-	    W->sharedInputs = TRUE;
-	  }
-	for (v = nextInputEvent; v < E->numEvents; v++)
-	  if (eventActive[v]) nextInputEvent = v + 1;
-      }
-      inputsSeen = TRUE;
-    }
-
-    /* Read targets */
-    else if (stringPeek(R, "T:") || stringPeek(R, "t:")) {
-      if (stringMatch(R, "T:")) sparseMode = FALSE;
-      else {
-	stringMatch(R, "t:");
-	sparseMode = TRUE;
-      }
-      
-      /* Figure out which events the targets are being specified for */
-      if (targetsSeen) { 
-	/* Targets have already been given since the last event list */
-	if (nextTargetEvent >= E->numEvents) {
-	 parseError(R, "attempted to specify targets for event %d", 
-		     nextTargetEvent);
-	  goto abort;}
-	V = E->event + nextTargetEvent++;
-	usingActive = FALSE;
-      } else {
-	/* This will apply to the active events */
-	for (v = 0, V = NULL; v < E->numEvents && !V; v++)
-	  if (eventActive[v]) V = E->event + v--;
-	if (!V) {
-	  parseError(R, "no events specified");
-	  goto abort;}
-	usingActive = TRUE;
-      }
-      if (V->target) {
-	parseError(R, "multiple targets specified for event %d", v);
-	goto abort;}
-
-      if (readEventRanges(V, S, R, FALSE, sparseMode)) goto abort;
-      
-      if (usingActive) {
-	for (w = v + 1; w < E->numEvents; w++)
-	  if (eventActive[w]) {
-	    W = E->event + w;
-	    if (W->target) {
-	      parseError(R, "multiple targets specified for event %d", w);
-	      goto abort;}
-	    W->target = V->target;
-	    W->sharedTargets = TRUE;
-	  }
-	for (v = nextTargetEvent; v < E->numEvents; v++)
-	  if (eventActive[v]) nextTargetEvent = v + 1;
-      }
-      targetsSeen = TRUE;
-    }
-#endif
-
-    else {
-      parseError(R, "missing semicolon or something unexpected (%s)", R->s);
-      goto abort;}
-  }
-  
-  FREE(eventActive);
-  return TCL_OK;
-  
-<<<<<<< HEAD
- abort:
-  FREE(eventActive);
-  return TCL_ERROR;
-}
-=======
-#  abort:
-#   FREE(eventActive);
-#   return TCL_ERROR;
-# }
+          for w in range(nextInputEvent, E.numEvents):
+            if eventActive[w]:
+              nextInputEvent = w + 1
+            inputsSeen = True
+        if doingTargets and not targetsSeen:
+          for w in range(v+1, E.numEvents):
+            if eventActive[w]:
+              W = E.event + w
+              if W.target:
+                parseError(R, "multiple targets given for event %d", w)
+                goto abort
+              W.target = T.target
+              W.sharedTargets = True
+          for w in range(nextTargetEvent, E.numEvents):
+            if eventActive[w]:
+              nextTargetEvent = w + 1
+            targetsSeen = True
+    
+    #TODO: ifdef JUNK block
 
 def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxExamples: int):
     S = Sp
@@ -867,7 +750,6 @@ def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
             # deleteExampleSet(S);
             return TCL_ERROR
     return  # result(setName)
-<<<<<<< HEAD
 
 
 M = longest_palindrome_sequence("acadca")
@@ -875,6 +757,3 @@ print(get_longest_palindrome_sequence(M, 0, len("acadca") - 1, "acadca"))
 print(findMinInsertions("abbcd", 0, 4))
 print(func("abbcd"))
 print(MinInsertionsDP("akbcd"))
->>>>>>> 6a3e9d0108b095929b7378c5816bc94b24c5e8db
-=======
->>>>>>> 4052d833bcbc735c5cff771c76afeaaf44922891
