@@ -858,10 +858,3 @@ def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
             # deleteExampleSet(S);
             return TCL_ERROR
     return  # result(setName)
-
-
-M = longest_palindrome_sequence("acadca")
-print(get_longest_palindrome_sequence(M, 0, len("acadca") - 1, "acadca"))
-print(findMinInsertions("abbcd", 0, 4))
-print(func("abbcd"))
-print(MinInsertionsDP("akbcd"))
