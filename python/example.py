@@ -867,6 +867,7 @@ def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
             # deleteExampleSet(S);
             return TCL_ERROR
     return  # result(setName)
+<<<<<<< HEAD
 
 
 M = longest_palindrome_sequence("acadca")
@@ -875,3 +876,5 @@ print(findMinInsertions("abbcd", 0, 4))
 print(func("abbcd"))
 print(MinInsertionsDP("akbcd"))
 >>>>>>> 6a3e9d0108b095929b7378c5816bc94b24c5e8db
+=======
+>>>>>>> 4052d833bcbc735c5cff771c76afeaaf44922891
