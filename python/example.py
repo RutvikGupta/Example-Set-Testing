@@ -80,6 +80,7 @@ class Root:
 
     """/ *returns the root that contains name * /
     / *what is Root? * / """
+
     def lookupExampleSet(self, name: str):
         for s in range(self.num_example_set):
             if self.set[s].name == name:
@@ -88,6 +89,7 @@ class Root:
 
     """/ *Stores a link to the set in the Root set table. Assumes set with same name is not there already * /
     """
+
     def registerExampleSet(self, S: ExampleSet):
         self.num_example_set += 1
         S.num = self.num_example_set - 1
@@ -207,17 +209,19 @@ class ParseRec:
         parsed_list.append(int(self.shift[self.parsed_s]))
         return TCL_OK
 
+
 def initEvent(V: Event, E: Example):
-  S = E.set
-  V.example = E
-  V.examplemaxTime  = example_defaults.DEF_V_maxTime
-  V.minTime       = example_defaults.DEF_V_minTime
-  V.graceTime     = example_defaults.DEF_V_graceTime
-  V.defaultInput  = S.defaultInput
-  V.__class__activeInput   = S.activeInput
-  V.defaultTarget = S.defaultTarget
-  V.activeTarget  = S.activeTarget
-  # initEventExtension(V)  function is used to free memory 
+    S = E.set
+    V.example = E
+    V.examplemaxTime = example_defaults.DEF_V_maxTime
+    V.minTime = example_defaults.DEF_V_minTime
+    V.graceTime = example_defaults.DEF_V_graceTime
+    V.defaultInput = S.defaultInput
+    V.__class__activeInput = S.activeInput
+    V.defaultTarget = S.defaultTarget
+    V.activeTarget = S.activeTarget
+    # initEventExtension(V)  function is used to free memory
+
 
 def register_example(E: Example, S: ExampleSet):
     E.next = None
@@ -291,6 +295,8 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
 
 
 """Prints an error message and returns TCL_ERROR"""
+
+
 def parseError(R: ParseRec, fmt: str) -> bool:
     print("loadExample: " + fmt + "on " + "line " + str(R.line) + " of file " + R.fileName)
     return TCL_ERROR
@@ -334,23 +340,23 @@ def compile_example_set(S: ExampleSet):
     # Count the number of examples and events
     S.numExamples, S.numEvents = 0, 0
     E = S.firstExample
-    while E: 
+    while E:
         S.numEvents += E.numEvents
 
         E = E.next
         S.numExamples += 1
 
-    #Build the example and permuted arrays */
+    # Build the example and permuted arrays */
 
     if S.numExamples:
         # allocate memory for S.example
         # allocate memory for S.permuted
         pass
-    
+
     # Fill the arrays and call the user-defined init procedures on each example and event
 
     i = 0
-    E = S.firstExample 
+    E = S.firstExample
     while E:
         # original line: S->example[i] = S->permuted[i] = E;
         S.example[i], S.permuted = E, E
@@ -382,7 +388,7 @@ def compile_example_set(S: ExampleSet):
             sum += S.example[i].frequency * scale
             S.example[i].probability = sum
         S.example[S.numExamples - 1].probability = 1.0
-    
+
     S.currentExample = None
     S.currentExampleNum = -1
 
@@ -455,7 +461,8 @@ def register_group_name(name: str, S: ExampleSet) -> str:
         S.groupName[S.numGroupNames] = name
     return S.groupName[i]
 
-#TODO
+
+# TODO
 
 # def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
 #                     doingInputs: bool, sparseMode: bool):
@@ -481,13 +488,15 @@ def abort(S: ExampleSet, E: Example):
 
 """/* This parses a text example */
 """
+
+
 def read_example(E: Example, R: ParseRec):
     eventActive = ""
     V = Event(E)
     W = Event(E)
     S = E.set
     inputsSeen, targetsSeen, done = True, True, True
-    v, w, nextInputEvent, nextTargetEvent = 0,0,0,0
+    v, w, nextInputEvent, nextTargetEvent = 0, 0, 0, 0
 
     # read the example header
     if fileDone(R):
@@ -497,226 +506,247 @@ def read_example(E: Example, R: ParseRec):
     done = False
     while not done:
 
-      buf = R.buf
+        buf = R.buf
 
-      if stringMatch(R, "name:"):
-        if readBlock(R, buf):
-          return parseError(R, "error reading example name")
-        E.name = copyString(buf.s)
-        done = False
-      if stringMatch(R, "freq:"):
-        if readReal(R, E.frequency):
-          return parseError(R, "error reading example frequency")
-        done = False
-      if stringMatch(R, "proc:"):
-        if readBlock(R, buf):
-          return parseError(R, "error reading example proc")
-        E.proc = Tcl_NewStringObj(buf.s, strlen(buf.s))
-        Tcl_IncrRefCount(E.proc)
-        done = False
-      
-      skipBlank(R)
-      if R.s[0].isdigit():
-        if readInt(R, E.numEvents):
-          return parseError(R, "error reading num-events")
-        if E.numEvents <= 0:
-          return parseError(R, "num-events (%d) must be positive", E.numEvents)
-        done = False
-    
-    #allocate memory
+        if stringMatch(R, "name:"):
+            if readBlock(R, buf):
+                return parseError(R, "error reading example name")
+            E.name = copyString(buf.s)
+            done = False
+        if stringMatch(R, "freq:"):
+            if readReal(R, E.frequency):
+                return parseError(R, "error reading example frequency")
+            done = False
+        if stringMatch(R, "proc:"):
+            if readBlock(R, buf):
+                return parseError(R, "error reading example proc")
+            E.proc = Tcl_NewStringObj(buf.s, strlen(buf.s))
+            Tcl_IncrRefCount(E.proc)
+            done = False
+
+        skipBlank(R)
+        if R.s[0].isdigit():
+            if readInt(R, E.numEvents):
+                return parseError(R, "error reading num-events")
+            if E.numEvents <= 0:
+                return parseError(R, "num-events (%d) must be positive", E.numEvents)
+            done = False
+
+    # allocate memory
     E.event
     for v in range(E.numEvents):
-      initEvent(E.event + v, E)
-    
-    #memory
-    eventActive 
+        initEvent(E.event + v, E)
+
+    # memory
+    eventActive
     nextInputEvent, nextTargetEvent = 0, 0
     inputsSeen = targetsSeen = True
 
     while not stringMatch(R, ";"):
-      if stringMatch(R, "[")
-        # get the list of events
-        if parseEventList(R, eventActive, E.numEvents):
-          goto abort
-        # This makes V the first active event, and v its index
-        v, V = 0, None
-        while v < E.numEvents and not V:
-          if eventActive[v]:
-            V = E.event + v
-            v -= 1
-        if not V: 
-          parseError(R, "no events specified")
-          goto abort
+        if stringMatch(R, "[")
+            # get the list of events
+            if parseEventList(R, eventActive, E.numEvents):
+                goto
+                abort
+            # This makes V the first active event, and v its index
+            v, V = 0, None
+            while v < E.numEvents and not V:
+                if eventActive[v]:
+                    V = E.event + v
+                    v -= 1
+            if not V:
+                parseError(R, "no events specified")
+                goto
+                abort
 
-        #parse the event headers
-        while not stringMatch(R. "]"):
-          if stringMatch(R, "proc:"):
-            if readBlock(R, buf):
-              return parseError(R, "error reading example proc")     
-            w = v
-            while w < E.numEvents:
-              if eventActive[w]:
-                W = E.event + w
-                W.proc = Tcl_NewStringObj(buf.s, len(buf.s))
-                Tcl_IncrRefCount(W.proc)
-                w+=1
-          elif stringMatch(R, "max:"):
-            if readReal(R, V.maxTime):
-              parseError(R, "missing value after \"max:\" in event header")
-              goto abort
-            for w in range(v+1, E.numEvents):
-              if eventActive[w]:
-                E.event[w].maxTime = V.maxTime
-          elif stringMatch(R, "min:"):
-            if readReal(R, V.minTime):
-              parseError(R, "missing value after \"min:\" in event header")
-              goto abort
-            for w in range(v+1, E.numEvents):
-              if eventActive[w]:
-                E.event[w].minTime = V.minTime
-          elif stringMatch(R, "grace:"):
-            if readReal(r, V.graceTime):
-              parseError(R, "missing value after \"grace:\" in event header")
-              goto abort
-            for w in range(v+1, E.numEvents):
-              if eventActive[w]:
-                E.event[w].graceTime = V.graceTime
-          elif stringMatch(R, "defI:"):
-            if readReal(r, V.defaultInput):
-              parseError(R, "missing value after \"defI:\" in event header")
-              goto abort
-            for w in range(v+1, E.numEvents):
-              if eventActive[w]:
-                E.event[w].defaultInput = V.defaultInput
-          elif stringMatch(R, "actI:"):
-            if readReal(r, V.activeInput):
-              parseError(R, "missing value after \"actI:\" in event header")
-              goto abort
-            for w in range(v+1, E.numEvents):
-              if eventActive[w]:
-                E.event[w].activeInput = V.activeInput
-          elif stringMatch(R, "defT:"):
-            if readReal(r, V.defaultTarget):
-              parseError(R, "missing value after \"defT:\" in event header")
-              goto abort
-            for w in range(v+1, E.numEvents):
-              if eventActive[w]:
-                E.event[w].defaultTarget = V.defaultTarget
-          elif stringMatch(R, "actT:"):
-            if readReal(r, V.activeTarget):
-              parseError(R, "missing value after \"actT:\" in event header")
-              goto abort
-            for w in range(v+1, E.numEvents):
-              if eventActive[w]:
-                E.event[w].activeTarget = V.activeTarget
-          else:
-            parseError(R, "something unexpected (%s) in event header", R.s)
-            goto abort
-      elif stringPeek(R, "I:") or stringPeek(R, "i:") or stringPeek(R, "T:") or \
-        stringPeek(R, "t:") or stringPeek(R "B:") or stringPeek(R, "b:"):
-        sparseMode, doingInputs, doingTargets = False, False, False
-        I, T = None
+            # parse the event headers
+            while not stringMatch(R. "]"):
+                if stringMatch(R, "proc:"):
+                    if readBlock(R, buf):
+                        return parseError(R, "error reading example proc")
+                    w = v
+                    while w < E.numEvents:
+                        if eventActive[w]:
+                            W = E.event + w
+                            W.proc = Tcl_NewStringObj(buf.s, len(buf.s))
+                            Tcl_IncrRefCount(W.proc)
+                            w += 1
+                elif stringMatch(R, "max:"):
+                    if readReal(R, V.maxTime):
+                        parseError(R, "missing value after \"max:\" in event header")
+                        goto
+                        abort
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            E.event[w].maxTime = V.maxTime
+                elif stringMatch(R, "min:"):
+                    if readReal(R, V.minTime):
+                        parseError(R, "missing value after \"min:\" in event header")
+                        goto
+                        abort
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            E.event[w].minTime = V.minTime
+                elif stringMatch(R, "grace:"):
+                    if readReal(r, V.graceTime):
+                        parseError(R, "missing value after \"grace:\" in event header")
+                        goto
+                        abort
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            E.event[w].graceTime = V.graceTime
+                elif stringMatch(R, "defI:"):
+                    if readReal(r, V.defaultInput):
+                        parseError(R, "missing value after \"defI:\" in event header")
+                        goto
+                        abort
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            E.event[w].defaultInput = V.defaultInput
+                elif stringMatch(R, "actI:"):
+                    if readReal(r, V.activeInput):
+                        parseError(R, "missing value after \"actI:\" in event header")
+                        goto
+                        abort
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            E.event[w].activeInput = V.activeInput
+                elif stringMatch(R, "defT:"):
+                    if readReal(r, V.defaultTarget):
+                        parseError(R, "missing value after \"defT:\" in event header")
+                        goto
+                        abort
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            E.event[w].defaultTarget = V.defaultTarget
+                elif stringMatch(R, "actT:"):
+                    if readReal(r, V.activeTarget):
+                        parseError(R, "missing value after \"actT:\" in event header")
+                        goto
+                        abort
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            E.event[w].activeTarget = V.activeTarget
+                else:
+                    parseError(R, "something unexpected (%s) in event header", R.s)
+                    goto
+                    abort
+        elif stringPeek(R, "I:") or stringPeek(R, "i:") or stringPeek(R, "T:") or \
+                stringPeek(R, "t:") or stringPeek(R "B:") or stringPeek(R, "b:"):
+            sparseMode, doingInputs, doingTargets = False, False, False
+            I, T = None
 
-        case = R.s[0]
+            case = R.s[0]
 
-        if case == 'I':
-          sparseMode, doingInputs, doingTargets = False, True, False 
-        if case == 'i':
-          sparseMode, doingInputs, doingTargets = True, True, False
-        if case == 'T':
-          sparseMode, doingInputs, doingTargets = False, False, True 
-        if case == 't':
-          sparseMode, doingInputs, doingTargets = True, False, True   
-        if case == 'B':
-          sparseMode, doingInputs, doingTargets = False, True, True     
-        if case == 'b':
-          sparseMode, doingInputs, doingTargets = True, True, True   
+            if case == 'I':
+                sparseMode, doingInputs, doingTargets = False, True, False
+            if case == 'i':
+                sparseMode, doingInputs, doingTargets = True, True, False
+            if case == 'T':
+                sparseMode, doingInputs, doingTargets = False, False, True
+            if case == 't':
+                sparseMode, doingInputs, doingTargets = True, False, True
+            if case == 'B':
+                sparseMode, doingInputs, doingTargets = False, True, True
+            if case == 'b':
+                sparseMode, doingInputs, doingTargets = True, True, True
 
-        R.s += 2
-        
-        if doingInputs:
-          if inputsSeen:
-            # /* Inputs have already been given since the last event list */
-            if nextInputEvent >= E.numEvents:
-              parseError(R, "attempted to specify inputs for event %d", nextInputEvent)
-              goto abort
-            I = E.event + nextInputEvent
-            nextInputEvent += 1
-          else:
-            #  /* This will apply to the active events */
-            for v in range(E.numEvents):
-              if eventActive[v]: 
-                I = E.event
-                v -= 1
-            if not I:
-              parseError(R, "no events specified")
-              goto abort
-            if I.input:
-              parseError(R, "multiple inputs given for event %d", v)
-              goto abort
-        if doingTargets:
-          if targetsSeen:
-            #  /* Targets have already been given since the last event list */
-            if nextTargetEvent >= E.numEvents:
-              parseError(R, "attempted to specify targets for event %d", nextTargetEvent)
-              goto abort
-            T = E.event + nextTargetEvent
-            nextTargetEvent += 1
-        else:
-          # /* This will apply to the active events */
-          for v in range(E.numEvents):
-            if eventActive[v]:
-              T = E.event + v
-              v -= 1
-          if not T:
-            parseError(R, "no events specified")
-            goto abort
-          if T.target:
-            parseError(R, "multiple targets given for event %d", v)
-            goto abort
-        
-        #TODO 
-        # what does this syntax mean in C? replace this line
-        V = (I) ? I : T
+            R.s += 2
 
-        if readEventRanges(V, S, R, V==I, sparseMode):
-          goto abort
-        if I and T:
-          if T.target:
-            parseError(R, "multiple targets specified for event %d", \
-		          (targetsSeen) ? nextTargetEvent - 1: v)
-            goto abort
-          T.target = I.input
-          T.sharedTargets = True
-        if doingInputs and not inputsSeen:
-          for w in range(v+1, E.numEvents):
-            if eventActive[w]:
-              W = E.event + w
-              if W.input:
-                parseError(R, "multiple inputs given for event %d", w)
-                goto abort
-              W.input = I.input
-              W.sharedInputs = True
+            if doingInputs:
+                if inputsSeen:
+                    # /* Inputs have already been given since the last event list */
+                    if nextInputEvent >= E.numEvents:
+                        parseError(R, "attempted to specify inputs for event %d", nextInputEvent)
+                        goto
+                        abort
+                    I = E.event + nextInputEvent
+                    nextInputEvent += 1
+                else:
+                    #  /* This will apply to the active events */
+                    for v in range(E.numEvents):
+                        if eventActive[v]:
+                            I = E.event
+                            v -= 1
+                    if not I:
+                        parseError(R, "no events specified")
+                        goto
+                        abort
+                    if I.input:
+                        parseError(R, "multiple inputs given for event %d", v)
+                        goto
+                        abort
+            if doingTargets:
+                if targetsSeen:
+                    #  /* Targets have already been given since the last event list */
+                    if nextTargetEvent >= E.numEvents:
+                        parseError(R, "attempted to specify targets for event %d", nextTargetEvent)
+                        goto
+                        abort
+                    T = E.event + nextTargetEvent
+                    nextTargetEvent += 1
+            else:
+                # /* This will apply to the active events */
+                for v in range(E.numEvents):
+                    if eventActive[v]:
+                        T = E.event + v
+                        v -= 1
+                if not T:
+                    parseError(R, "no events specified")
+                    goto
+                    abort
+                if T.target:
+                    parseError(R, "multiple targets given for event %d", v)
+                    goto
+                    abort
 
-          for w in range(nextInputEvent, E.numEvents):
-            if eventActive[w]:
-              nextInputEvent = w + 1
-            inputsSeen = True
-        if doingTargets and not targetsSeen:
-          for w in range(v+1, E.numEvents):
-            if eventActive[w]:
-              W = E.event + w
-              if W.target:
-                parseError(R, "multiple targets given for event %d", w)
-                goto abort
-              W.target = T.target
-              W.sharedTargets = True
-          for w in range(nextTargetEvent, E.numEvents):
-            if eventActive[w]:
-              nextTargetEvent = w + 1
-            targetsSeen = True
-    
-    #TODO: ifdef JUNK block
+            # TODO
+            # what does this syntax mean in C? replace this line
+            V = (I) ? I: T
+
+            if readEventRanges(V, S, R, V == I, sparseMode):
+                goto
+                abort
+            if I and T:
+                if T.target:
+                    parseError(R, "multiple targets specified for event %d", \
+                               (targetsSeen) ? nextTargetEvent - 1: v)
+                    goto
+                    abort
+                T.target = I.input
+                T.sharedTargets = True
+            if doingInputs and not inputsSeen:
+                for w in range(v + 1, E.numEvents):
+                    if eventActive[w]:
+                        W = E.event + w
+                        if W.input:
+                            parseError(R, "multiple inputs given for event %d", w)
+                            goto
+                            abort
+                        W.input = I.input
+                        W.sharedInputs = True
+
+                for w in range(nextInputEvent, E.numEvents):
+                    if eventActive[w]:
+                        nextInputEvent = w + 1
+                    inputsSeen = True
+            if doingTargets and not targetsSeen:
+                for w in range(v + 1, E.numEvents):
+                    if eventActive[w]:
+                        W = E.event + w
+                        if W.target:
+                            parseError(R, "multiple targets given for event %d", w)
+                            goto
+                            abort
+                        W.target = T.target
+                        W.sharedTargets = True
+                for w in range(nextTargetEvent, E.numEvents):
+                    if eventActive[w]:
+                        nextTargetEvent = w + 1
+                    targetsSeen = True
+
+    # TODO: ifdef JUNK block
+
 
 def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxExamples: int):
     S = Sp
@@ -728,6 +758,80 @@ def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxE
     R.buf = None
     R.s = None
     R.line = 0
+    R.channel = readChannel(fileName)
+    if not R.channel:
+        return "readExampleSet: couldn't open the file " + fileName
+    R.fileName = fileName
+    R.buf = None
+    R.s = None
+    R.line = 0
+    if startParser(R, HTONL(val)):
+        return parseError(R, "couldn't read the header")
+    R.readInt(val)
+    R.readInt(val)
+    if not S:
+        S = ExampleSet(setName)
+        Root.registerExampleSet(S)
+
+    while not stringMatch(R, ";"):
+        if stringMatch(R, "proc:"):
+            if readBlock(R, buf):
+                parseError(R, "error reading code segment")
+                return abort
+            # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
+            # Tcl_IncrRefCount(S->proc);
+            # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
+            # return TCL_ERROR;
+        elif stringMatch(R, "max:"):
+            if readReal(R, & (S->maxTime)):
+                parseError(R, "missing value after \"max:\" in the set header")
+                return abort(S, E)
+
+        elif stringMatch(R, "min:"):
+            if readReal(R, & (S->minTime)):
+                parseError(R, "missing value after \"min:\" in the set header")
+                return abort(S, E)
+
+        elif (stringMatch(R, "grace:")):
+            if (readReal(R, & (S->graceTime))):
+                parseError(R, "missing value after \"grace:\" in the set header")
+                return abort(S, E)
+
+        elif (stringMatch(R, "defI:")):
+            if (readReal(R, & (S->defaultInput))):
+                parseError(R, "missing value after \"defI:\" in the set header")
+                return abort(S, E)
+
+        elif (stringMatch(R, "actI:")):
+            if (readReal(R, & (S->activeInput))):
+                parseError(R, "missing value after \"actI:\" in the set header")
+                return abort(S, E)
+
+        elif (stringMatch(R, "defT:")):
+            if (readReal(R, & (S->defaultTarget))):
+                parseError(R, "missing value after \"defT:\" in the set header")
+                return abort(S, E)
+
+        elif (stringMatch(R, "actT:")):
+            if (readReal(R, & (S->activeTarget))):
+                parseError(R, "missing value after \"actT:\" in the set header")
+                return abort(S, E)
+        else:
+            break
+    halted = False
+    while (not fileDone(R)) and (not halted) and (not maxExamples or examplesRead < maxExamples):
+        E = Example(S)
+        if (readExample(E, R)):
+            return abort(S, E)
+        registerExample(E, S)
+
+        halted = smartUpdate(FALSE)
+    """/ *This is called to clean up the parser * /"""
+    parseError(R, "")
+    compileExampleSet(S)
+    if (halted):
+        return result("readExampleSet: halted prematurely");
+    return TCL_OK;
 
 
 """/* A mode of 0 means do nothing if the set exists.
@@ -747,10 +851,3 @@ def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
             # deleteExampleSet(S);
             return TCL_ERROR
     return  # result(setName)
-
-
-M = longest_palindrome_sequence("acadca")
-print(get_longest_palindrome_sequence(M, 0, len("acadca") - 1, "acadca"))
-print(findMinInsertions("abbcd", 0, 4))
-print(func("abbcd"))
-print(MinInsertionsDP("akbcd"))
