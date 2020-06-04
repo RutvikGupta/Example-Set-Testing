@@ -1,10 +1,8 @@
-from typing import List, Dict, Tuple
+from typing import List
 
 TCL_ERROR = False
 TCL_OK = True
-import example_defaults
-import exampleClasses
-import util
+from python import example_defaults
 
 
 class ExampleSet:
@@ -43,8 +41,8 @@ class ExampleSet:
     defaultTarget: float
     activeTarget: float
     # int replaces short
-    numGroupNames: short  # hidden
-    maxGroupNames: short  # hidden
+    numGroupNames: int  # hidden
+    maxGroupNames: int  # hidden
     groupName: list  # hidden
 
     # what are flags and how to translate?
@@ -498,11 +496,10 @@ def read_example(E: Example, R: ParseRec):
     done = False
     while not done:
 
-       #!
       buf = R.buf
 
       if stringMatch(R, "name:"):
-        if readBlock(R, buf)):
+        if readBlock(R, buf):
           return parseError(R, "error reading example name")
         E.name = copyString(buf.s)
         done = False
