@@ -212,9 +212,9 @@ class ParseRec:
 def initEvent(V: Event, E: Example):
   S = E.set
   V.example = E
-  V.examplemaxTime       = DEF_V_maxTime
-  V.minTime       = DEF_V_minTime
-  V.graceTime     = DEF_V_graceTime
+  V.examplemaxTime  = example_defaults.DEF_V_maxTime
+  V.minTime       = example_defaults.DEF_V_minTime
+  V.graceTime     = example_defaults.DEF_V_graceTime
   V.defaultInput  = S.defaultInput
   V.__class__activeInput   = S.activeInput
   V.defaultTarget = S.defaultTarget
@@ -828,3 +828,40 @@ def read_example(E: Example, R: ParseRec):
 #   FREE(eventActive);
 #   return TCL_ERROR;
 # }
+
+def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxExamples: int):
+    S = Sp
+    E = Example(Sp)
+    val, examplesRead = 0, 0
+    halted = False
+    R = ParseRec()
+    R.fileName = fileName
+    R.buf = None
+    R.s = None
+    R.line = 0
+
+
+"""/* A mode of 0 means do nothing if the set exists.
+   1 means override the set
+   2 means add to the set
+   3 means use as a pipe */"""
+
+
+def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
+    R = Root()
+    S = R.lookupExampleSet(setName)
+    if S and mode == 1:
+        # deleteExampleSet(S);
+        S = None
+    if not S or mode != 0:
+        if readExampleSet(setName, fileName, S, mode, numExamples):
+            # deleteExampleSet(S);
+            return TCL_ERROR
+    return  # result(setName)
+
+
+M = longest_palindrome_sequence("acadca")
+print(get_longest_palindrome_sequence(M, 0, len("acadca") - 1, "acadca"))
+print(findMinInsertions("abbcd", 0, 4))
+print(func("abbcd"))
+print(MinInsertionsDP("akbcd"))
