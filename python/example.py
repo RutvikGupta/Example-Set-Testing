@@ -854,7 +854,7 @@ def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxE
         if stringMatch(R, "proc:"):
             if readBlock(R, buf):
                  return parseError(R, "error reading code segment")
-                return
+            
             # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
             # Tcl_IncrRefCount(S->proc);
             # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
