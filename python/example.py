@@ -4,6 +4,7 @@ import re
 TCL_ERROR = False
 TCL_OK = True
 from python import example_defaults
+from python import util
 
 
 class ExampleSet:
@@ -28,7 +29,7 @@ class ExampleSet:
     pipeParser = None  # ParseRec
 
     pipeLoop: bool  # flag
-    # whats python eq for flag? 
+    # whats python eq for flag?
     pipeExampleNum: int
 
     # Tcl_Obj defined in C macro in example.h 
@@ -285,7 +286,7 @@ def clean_example(E: Example):
                     L = N
             if V.proc:
                 Tcl_DecrRefCount(V.proc)  # !
-            freeEventExtension(V)  # !
+            # freeEventExtension(V)  # !
 
 
 def clearExample(E: Example):
