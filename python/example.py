@@ -509,53 +509,51 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
     maxUnits, maxvals = 2, 2
     event_list = R.s.split(" ")
     i = 0
-    while i < len(event_list) and not done:
-        if event_list[i] == "{": #stringMatch(R, "{"):
+    while not done:
+        if R.stringMatch("{"):
             # function naming convention?
-            i += 1
             tidy_up_range(L, unit, val, sparseMode)
             L = Range(V, doingInputs, L)
-            while i < len(event_list) and not event_list[i] == "}": #stringMatch(R, "}"):
-                if isNumber(R):
-                    if readReal(R, L.value):
-                        parseError(R, "couldn't read sparse active value")
-
+            while not R.stringMatch("}"):
+                if R.isNumber():
+                    if R.readReal(L.value):
+                        return parseError(R, "couldn't read sparse active value")
                 else:
-                    if readBlock(R, buf):
-                        parseError(R, Tcl_GetStringResult(Interp))
+                    if R.readBlock(buf):
+                        return parseError(R, Tcl_GetStringResult(Interp))
 
 
                     if buf.s[0]:
                         L.groupName = register_group_name(buf.s, S)
                         if not L.groupName:
-                            parseError(R, "too many group names used")
+                            return parseError(R, "too many group names used")
 
             sparseMode = True
-
-        elif stringMatch(R, "("):
+        elif R.stringMatch("("):
             tidy_up_range(L, unit, val, sparseMode)
-            L = newRange(V, L, doingInputs)
-            while not stringMatch(R, ")"):
-                if isNumber(R):
-                    if readInt(R, L.firstUnit):
-                        parseError(R, "couldn't read dense first unit")
-
+            L = Range(V, doingInputs, L)
+            while not R.stringMatch(")"):
+                if R.isNumber():
+                    v = R.readInt()
+                    if v != False:
+                        L.firstUnit = v
+                    else:
+                        return parseError(R, "couldn't read dense first unit")
                 else:
                     if readBlock(R, buf):
-                        parseError(R, Tcl_GetStringResult(Interp))
+                        return parseError(R, Tcl_GetStringResult(Interp))
 
-                if buf.s[0]:
-                    L.groupName = register_group_name(buf.s, S)
-                    if not L.groupName:
-                        parseError(R, "too many groups used")
+                    if buf.s[0]:
+                        L.groupName = register_group_name(buf.s, S)
+                        if not L.groupName:
+                            return parseError(R, "too many groups used")
+            sparseMode = False
 
-        sparseMode = False
-
-        elif stringMatch(R, "*"):
+        elif R.stringMatch("*"):
             if not L:
-                L = newRange(V, L, doingInputs)
-            if not sparseMode or L.numUnits:
-                parseError(R, "* may only be the first thing in a sparse range")
+                L = Range(V, doingInputs, L)
+            if (not sparseMode) or L.numUnits:
+                return parseError(R, "* may only be the first thing in a sparse range")
 
             if L.numUnits >= maxUnits:
                 maxUnits *= 2
@@ -563,44 +561,41 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
             unit[L.numUnits] = -1
             L.numUnits += 1
 
-        elif isNumber(R):
-        if not L:
-            L = newRange(V, L, doingInputs)
-        if sparseMode:
-            if L.numUnits and unit[0] < 0:
-                parseError(R, "cannot have other units listed after *")
+        elif R.isNumber():
+            if not L:
+                L = Range(V, doingInputs, L)
+            if sparseMode:
+                if L.numUnits and unit[0] < 0:
+                    return parseError(R, "cannot have other units listed after *")
 
                 if L.numUnits >= maxUnits:
                     maxUnits *= 2
-                unit = []
-                if readInt(R, unit + L.numUnits):
-                    parseError(R, "error reading a sparse unit number")
-
-                # careful here...
-                if unit[L.numUnits] < 0 and (L.numUnits == 0 or \
-                                             0 - unit[L.numUnits] < unit[L.numUnits - 1]):
-                    parseError(R, "invalid sparse unit range")
-
-                    L.numUnits += 1
+                    unit = []
+                res = R.readInt()
+                if res is not False:
+                    unit[L.numUnits] = res
                 else:
-                    if L.numUnits >= maxVals:
-                        maxVals *= 2
+                    return parseError(R, "error reading a sparse unit number")
+
+
+                if unit[L.numUnits] < 0 and (L.numUnits == 0 or ((0 -unit[L.numUnits]) < unit[L.numUnits - 1])):
+                    return parseError(R, "invalid sparse unit range")
+                L.numUnits += 1
+            else:
+                if L.numUnits >= maxvals:
+                    maxvals *= 2
                     val = []
-                    if readReal(R, val + L.numUnits)
-                        parseError(R, "couldn't read dense values")
-                        L.numUnits += 1
-                    else:
-                        done = True
-                    tidy_up_range(L, unit, val, sparseMode)
+                if readReal(R, val + L.numUnits)
+                    return parseError(R, "couldn't read dense values")
+                L.numUnits += 1
+        else:
+            done = True
+    tidy_up_range(L, unit, val, sparseMode)
     return TCL_OK
-
-
 
 
 """/* This parses a text example */
 """
-
-
 def read_example(E: Example, R: ParseRec):
     eventActive = ""
     V = Event(E)
