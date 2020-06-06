@@ -402,26 +402,34 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     lst = []
     # bzero((void *) eventActive, num)
     # skipBlank(R)
-    while R.s[0].isdigit() or R.s[0] == "*":
+    event_list = R.s.split(" ")
+    lst = [0, 0]
+    i = 0
+    while i < len(event_list) and (event_list[i].isdigit() or event_list[i] == "*"):
         empty = False
-        if R.s == "*":
+        if event_list[i] == "*":
+            i += 1
             for i in range(num):
                 eventActive[i] = True
         else:
-            if R.readInt(lst):  # ! C functions
-                return parseError(R, "error reading event list")
-            elif lst[-1] < 0 or lst[-1] >= num:
+            if event_list[i].isdigit():  # ! C functions
+                i += 1
+                lst[0] = event_list[i]
+                # return parseError(R, "error reading event list")
+            if lst[0] < 0 or lst[0] >= num:
                 return parseError(R, "event" + str(lst[-1]) + " out of range")
-            elif R.s is "-":
-                if R.readInt(lst):
-                    return parseError(R, "error reading event range")
+            if i < len(event_list) and event_list[i] == "-":
+                i += 1
+                if i < len(event_list) and event_list[i].isdigit():
+                    lst[1] = event_list[i]
+                    # return parseError(R, "error reading event range")
                 if lst[-1] <= lst[-2] or lst[-1] >= num:
                     return parseError(R, "event" + str(lst[-1]) + " out of range")
             else:
                 lst[-1] = lst[-2]
             while lst[-2] <= lst[-1]:
                 eventActive[lst[-2]] = True
-                lst[-1] += 1
+                lst[-2] += 1
         # skipBlank(R)
     if empty:
         for v in range(num):
