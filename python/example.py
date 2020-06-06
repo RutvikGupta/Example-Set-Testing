@@ -394,7 +394,7 @@ def compile_example_set(S: ExampleSet):
 
 
 """This parses a list of event numbers 
-# used bool for flag; true replaces Tcl_Ok"""
+   used bool for flag; true replaces Tcl_Ok"""
 
 
 def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
@@ -402,26 +402,34 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     lst = []
     # bzero((void *) eventActive, num)
     # skipBlank(R)
-    while R.s[0].isdigit() or R.s[0] == "*":
+    event_list = R.s.split(" ")
+    lst = [0, 0]
+    i = 0
+    while i < len(event_list) and (event_list[i].isdigit() or event_list[i] == "*"):
         empty = False
-        if R.s == "*":
+        if event_list[i] == "*":
+            i += 1
             for i in range(num):
                 eventActive[i] = True
         else:
-            if R.readInt(lst):  # ! C functions
-                return parseError(R, "error reading event list")
-            elif lst[-1] < 0 or lst[-1] >= num:
+            if event_list[i].isdigit(): # ! C functions
+                i += 1
+                lst[0] = event_list[i]
+                # return parseError(R, "error reading event list")
+            if lst[0] < 0 or lst[0] >= num:
                 return parseError(R, "event" + str(lst[-1]) + " out of range")
-            elif R.s is "-":
-                if R.readInt(lst):
-                    return parseError(R, "error reading event range")
+            if i < len(event_list) and event_list[i] == "-":
+                i += 1
+                if i < len(event_list) and event_list[i].isdigit():
+                    lst[1] = event_list[i]
+                    #return parseError(R, "error reading event range")
                 if lst[-1] <= lst[-2] or lst[-1] >= num:
                     return parseError(R, "event" + str(lst[-1]) + " out of range")
             else:
                 lst[-1] = lst[-2]
             while lst[-2] <= lst[-1]:
                 eventActive[lst[-2]] = True
-                lst[-1] += 1
+                lst[-2] += 1
         # skipBlank(R)
     if empty:
         for v in range(num):
@@ -482,17 +490,17 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
             while not stringMatch(R, "}"):
                 if isNumber(R):
                     if readReal(R, L.value):
-                        parseError(R, "couldn't read sparse active value")
+                        return parseError(R, "couldn't read sparse active value")
 
                 else:
                     if readBlock(R, buf):
-                        parseError(R, Tcl_GetStringResult(Interp))
+                        return parseError(R, Tcl_GetStringResult(Interp))
 
 
                     if buf.s[0]:
                         L.groupName = register_group_name(buf.s, S)
                         if not L.groupName:
-                            parseError(R, "too many group names used")
+                            return parseError(R, "too many group names used")
 
             sparseMode = True
 
@@ -502,7 +510,7 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
             while not stringMatch(R, ")"):
                 if isNumber(R):
                     if readInt(R, L.firstUnit):
-                        parseError(R, "couldn't read dense first unit")
+                        return parseError(R, "couldn't read dense first unit")
 
                 else:
                     if readBlock(R, buf):
