@@ -2,7 +2,7 @@ from typing import List
 
 TCL_ERROR = False
 TCL_OK = True
-from python import example_defaults
+
 
 
 class ExampleSet:
@@ -27,7 +27,7 @@ class ExampleSet:
     pipeParser = None  # ParseRec
 
     pipeLoop: bool  # flag
-    # whats python eq for flag? 
+    # whats python eq for flag?
     pipeExampleNum: int
 
     # Tcl_Obj defined in C macro in example.h 
