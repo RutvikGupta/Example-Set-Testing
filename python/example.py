@@ -1,4 +1,5 @@
 from typing import List
+import re
 
 TCL_ERROR = False
 TCL_OK = True
@@ -194,20 +195,46 @@ class ParseRec:
     line: int
     buf: str
     s: str
-    shift: list  # length of s
     parsed_s: int
+    s_list: list
 
     def __init__(self):
-        self.shift = list(self.s)
         self.parsed_s = 0
+        self.s_list = self.s.split(" ")
 
-    def readInt(self, parsed_list: list):
-        if self.parsed_s is []:
+    def readInt(self):
+        if self.parsed_s >= len(self.s_list):
             return TCL_ERROR
-        while self.parsed_s < len(self.shift) and not self.shift[self.parsed_s].isdigit():
+        val = self.s_list.pop(self.parsed_s)
+        self.parsed_s += 1
+        return val
+
+    def stringMatch(self, s:str):
+        if self.parsed_s >= len(self.s_list):
+            return TCL_ERROR
+        if self.s_list[self.parsed_s] == s:
             self.parsed_s += 1
-        parsed_list.append(int(self.shift[self.parsed_s]))
-        return TCL_OK
+            return TCL_OK
+        else:
+            return TCL_ERROR
+
+    def isNumber(self):
+        if self.parsed_s >= len(self.s_list):
+            return TCL_ERROR
+        lst = list(self.s_list[self.parsed_s])
+        while len(lst) > 0 and "-" == self.s_list[self.parsed_s][0]:
+            if len(lst) == 1:
+                self.parsed_s += 1
+                return TCL_OK
+            elif lst[i+1] in "});":
+                self.parsed_s += 1
+                return TCL_OK
+            else:
+                lst.pop(0)
+
+        regex = re.compile(r'[+-]?([0-9]*[.])?[0-9]+')
+        return bool(regex.match(self.s_list[self.parsed_s]))
+
 
 
 def initEvent(V: Event, E: Example):
@@ -421,6 +448,7 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
             if i < len(event_list) and event_list[i] == "-":
                 i += 1
                 if i < len(event_list) and event_list[i].isdigit():
+                    i += 1
                     lst[1] = event_list[i]
                     # return parseError(R, "error reading event range")
                 if lst[-1] <= lst[-2] or lst[-1] >= num:
@@ -437,8 +465,7 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     return True
 
 
-def tidy_up_range(L: Range, unit: int, val: float, sparseMode: bool):
-    i = 1
+def tidy_up_range(L: Range, unit: List[int], val: List[float], sparseMode: bool):
     if not L:
         return
     if sparseMode:
@@ -470,24 +497,24 @@ def register_group_name(name: str, S: ExampleSet) -> str:
     return S.groupName[i]
 
 
-# TODO
-
 def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                     doingInputs: bool, sparseMode: bool):
     # TODO buf = ???
-
     L = None
+    #L = Range(V, doingInputs)
     done = False
     unit = []
     val = []
     maxUnits, maxvals = 2, 2
-
-    while not done:
-        if stringMatch(R, "{"):
+    event_list = R.s.split(" ")
+    i = 0
+    while i < len(event_list) and not done:
+        if event_list[i] == "{": #stringMatch(R, "{"):
             # function naming convention?
-            tidyUpRange(L, unit, val, sparseMode)
-            L = newRange(V, L, doingInputs)
-            while not stringMatch(R, "}"):
+            i += 1
+            tidy_up_range(L, unit, val, sparseMode)
+            L = Range(V, doingInputs, L)
+            while i < len(event_list) and not event_list[i] == "}": #stringMatch(R, "}"):
                 if isNumber(R):
                     if readReal(R, L.value):
                         parseError(R, "couldn't read sparse active value")
