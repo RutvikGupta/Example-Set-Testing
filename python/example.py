@@ -2,7 +2,7 @@ from typing import List
 
 TCL_ERROR = False
 TCL_OK = True
-from python import example_defaults
+import example_defaults
 
 
 class ExampleSet:
@@ -483,19 +483,17 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                 if isNumber(R):
                     if readReal(R, L.value):
                         parseError(R, "couldn't read sparse active value")
-                        goto
-                        error
+
                 else:
                     if readBlock(R, buf):
                         parseError(R, Tcl_GetStringResult(Interp))
-                        goto
-                        error
+
+
                     if buf.s[0]:
                         L.groupName = register_group_name(buf.s, S)
                         if not L.groupName:
                             parseError(R, "too many group names used")
-                            goto
-                            error
+
             sparseMode = True
 
         elif stringMatch(R, "("):
@@ -505,84 +503,62 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                 if isNumber(R):
                     if readInt(R, L.firstUnit):
                         parseError(R, "couldn't read dense first unit")
-                        goto
-                        error
+
                 else:
                     if readBlock(R, buf):
                         parseError(R, Tcl_GetStringResult(Interp))
-                        goto
-                        error
+
                 if buf.s[0]:
                     L.groupName = register_group_name(buf.s, S)
                     if not L.groupName:
                         parseError(R, "too many groups used")
-                        goto
-                        error
+
         sparseMode = False
 
-    elif stringMatch(R, "*"):
-    if not L:
-        L = newRange(V, L, doingInputs)
-    if not sparseMode or L.numUnits:
-        parseError(R, "* may only be the first thing in a sparse range")
-        goto
-        error
-    if L.numUnits >= maxUnits:
-        maxUnits *= 2
-        unit = []
-    unit[L.numUnits] = -1
-    L.numUnits += 1
+        elif stringMatch(R, "*"):
+            if not L:
+                L = newRange(V, L, doingInputs)
+            if not sparseMode or L.numUnits:
+                parseError(R, "* may only be the first thing in a sparse range")
 
-elif isNumber(R):
-if not L:
-    L = newRange(V, L, doingInputs)
-if sparseMode:
-    if L.numUnits and unit[0] < 0:
-        parseError(R, "cannot have other units listed after *")
-        goto
-        error;}
-        if L.numUnits >= maxUnits:
-            maxUnits *= 2
-        unit = []
-        if readInt(R, unit + L.numUnits):
-            parseError(R, "error reading a sparse unit number")
-        goto
-        error
+            if L.numUnits >= maxUnits:
+                maxUnits *= 2
+                unit = []
+            unit[L.numUnits] = -1
+            L.numUnits += 1
 
-        # careful here...
-        if unit[L.numUnits] < 0 and (L.numUnits == 0 or \
-                                     0 - unit[L.numUnits] < unit[L.numUnits - 1]):
-            parseError(R, "invalid sparse unit range")
-        goto
-        error
-        L.numUnits += 1
-        else:
-        if L.numUnits >= maxVals:
-            maxVals *= 2
-        val = []
-        if readReal(R, val + L.numUnits)
-        parseError(R, "couldn't read dense values")
-        goto
-        error
-        L.numUnits += 1
-        else:
-        done = True
-        tidy_up_range(L, unit, val, sparseMode)
-return TCL_OK
+        elif isNumber(R):
+        if not L:
+            L = newRange(V, L, doingInputs)
+        if sparseMode:
+            if L.numUnits and unit[0] < 0:
+                parseError(R, "cannot have other units listed after *")
 
-# TODO: reimplement jump to error block
-error:
-return TCL_ERROR
+                if L.numUnits >= maxUnits:
+                    maxUnits *= 2
+                unit = []
+                if readInt(R, unit + L.numUnits):
+                    parseError(R, "error reading a sparse unit number")
+
+                # careful here...
+                if unit[L.numUnits] < 0 and (L.numUnits == 0 or \
+                                             0 - unit[L.numUnits] < unit[L.numUnits - 1]):
+                    parseError(R, "invalid sparse unit range")
+
+                    L.numUnits += 1
+                else:
+                    if L.numUnits >= maxVals:
+                        maxVals *= 2
+                    val = []
+                    if readReal(R, val + L.numUnits)
+                        parseError(R, "couldn't read dense values")
+                        L.numUnits += 1
+                    else:
+                        done = True
+                    tidy_up_range(L, unit, val, sparseMode)
+    return TCL_OK
 
 
-def abort(S: ExampleSet, E: Example):
-    R = Root()
-    # if S:
-    #     if R.lookupExampleSet(S.name):
-    #         compileExampleSet(S);
-    # if E:
-    #     freeExample(E)
-    return TCL_ERROR
 
 
 """/* This parses a text example */
