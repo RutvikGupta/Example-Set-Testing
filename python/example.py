@@ -244,11 +244,11 @@ class ParseRec:
         if self.parsed_s >= len(self.s_list):
             return TCL_ERROR
         lst = list(self.s_list[self.parsed_s])
-        while len(lst) > 0 and "-" == self.s_list[self.parsed_s][0]:
+        while len(lst) > 0 and "-" == lst[0]:
             if len(lst) == 1:
                 self.parsed_s += 1
                 return TCL_OK
-            elif lst[i + 1] in "});":
+            elif lst[1] in "});":
                 self.parsed_s += 1
                 return TCL_OK
             else:
