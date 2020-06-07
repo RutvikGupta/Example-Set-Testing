@@ -222,11 +222,11 @@ class ParseRec:
         v = 0.0
         if self.parsed_s >= len(self.s_list):
             return TCL_ERROR
-        shift = self.parsed_s
-        while shift < len(self.s_list) and (not self.s_list[shift] in ",;{}[]"):
+        shift = 0
+        while shift < len(self.s_list[self.parsed_s]) and (not self.s_list[self.parsed_s][shift] in ",;{}[]"):
             shift += 1
-        if not self.s_list[shift] == "-":
-            self.parsed_s += shift
+        if not self.s_list[self.parsed_s][0: shift + 1] == "-":
+            self.parsed_s += 1
             return float('nan')
         else:
             try:
@@ -275,12 +275,84 @@ class ParseRec:
             return TCL_ERROR
 
     def fileDone(self):
-        pass
-        # TODO
+        if not self.channel:
+            return TCL_OK
+        # else:
+        #     if (Tcl_InputBuffered(R->channel) == 0)
+        #     debug("killing because nothing buffered\n");
+        #     return TRUE;
+        #     return FALSE;
 
-    def readblock(self, buf):
-        pass
+    def readBlock(self, s: list):
+        stack = []
+        depth = 0
+        s_index_counter = 0
+        modified_s = self.s_list[self.parsed_s]
+        shift = 0
+        # """/* If it doesn't begin with a delimiter just go up to the next space */"""
+        if self.s_list[self.parsed_s][shift] < len(self.s_list):
+            return TCL_ERROR
+        if not self.s_list[shift] in "{([\"":
+            shift = 0
+            while shift < len(self.s_list[self.parsed_s]) and (not self.s_list[self.parsed_s][shift] in "{}()[]\""):
+                shift += 1
+            s[0] = s[0] + self.s_list[self.parsed_s][0: shift + 1]
+        # """/* Get everything in the next set of brackets and discard them */"""
+        else:
 
+            for i in range(self.parsed_s + 1, len(self.s_list)):
+                modified_s = modified_s + " " + self.s_list[i]
+            stack[depth] = modified_s[0]
+            s_index_counter += 1
+            depth += 1
+            shift += 1
+            protect = False
+            while depth > 0:
+                while shift < len(modified_s) and depth > 0:
+                    if modified_s[shift] == '\\':
+                        protect = 1 - protect
+                        continue
+                    if protect:
+                        protect = False
+                        continue
+                    if modified_s[shift] == "{" or modified_s[shift] == "(" or modified_s[shift] == "[":
+                        stack[depth] = modified_s[shift]
+                        depth += 1
+                    elif modified_s[shift] == "}":
+                        if stack[depth - 1] == "{":
+                            depth -= 1
+                        else:
+                            return self.parseError("error parsing block, unexpected }")
+                    elif modified_s[shift] == ")":
+                        if stack[depth - 1] == "(":
+                            depth -= 1
+                        else:
+                            return self.parseError("error parsing block, unexpected )")
+                    elif modified_s[shift] == "[":
+                        if stack[depth - 1] == "]":
+                            depth -= 1
+                        else:
+                            return self.parseError("error parsing block, unexpected ]")
+
+                    elif modified_s[shift] == '"':
+                        if stack[depth - 1] == '"':
+                            depth -= 1
+                        else:
+                            stack[depth] = '"'
+                            depth += 1
+                    shift += 1
+                # if depth == 0:
+                if len(s[0]):
+                    s[0] = s[0] + "\n"
+                s[0] = s[0] + modified_s[s_index_counter:shift + 1]
+                if depth != 0:
+                    if self.getLine():
+                        return TCL_ERROR
+                    shift = s_index_counter
+
+        self.parsed_s = 0
+        self.s_list = modified_s[s_index_counter:].split(" ")
+        return TCL_OK
 
 
 def register_example(E: Example, S: ExampleSet):
@@ -452,7 +524,7 @@ def compile_example_set(S: ExampleSet):
 def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     empty = True
     lst = []
-    lst= [0, 0]
+    lst = [0, 0]
     while R.s_list[R.parsed_s].isdigit() or R.s_list[R.parsed_s] == "*":
         empty = False
         if R.stringMatch("*"):
@@ -866,7 +938,7 @@ def read_example(E: Example, R: ParseRec):
                     if eventActive[w]:
                         W = E.event[w]
                         if W.input:
-                            return R.parseError("multiple inputs given for event "+ str(w))
+                            return R.parseError("multiple inputs given for event " + str(w))
 
                         W.input = I.input
                         W.sharedInputs = True

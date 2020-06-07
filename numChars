@@ -1,0 +1,332 @@
+act.c:  numExamples = (Net->batchSize > 0) ? Net->batchSize : S->numExamples;
+act.c:  if (numExamples == 0 && S->mode == PIPE)
+act.c:    E = S->currentExample;
+act.c:    print(1, "%s\n", S->s);
+act.c:  } else result(S->s);
+act.c:    numExamples = S->numExamples;
+act.c:    if (numExamples == 0 && S->mode == PIPE && S->pipeLoop)
+act.c:      if (S->mode != PIPE) return TCL_ERROR;
+act.c:    E = S->currentExample;
+act.c:  if (!S->example || num < 0) {
+act.c:    if (num >= S->numExamples) 
+act.c:    if (S->loadExample(S->example[num])) return TCL_ERROR;
+act.c:  E = S->currentExample;
+act.c.dcp:  numExamples = (Net->batchSize > 0) ? Net->batchSize : S->numExamples;
+act.c.dcp:  if (numExamples == 0 && S->mode == PIPE)
+act.c.dcp:    E = S->currentExample;
+act.c.dcp:    print(1, "%s\n", S->s);
+act.c.dcp:  } else result(S->s);
+act.c.dcp:    numExamples = S->numExamples;
+act.c.dcp:    if (numExamples == 0 && S->mode == PIPE && S->pipeLoop)
+act.c.dcp:      if (S->mode != PIPE) return TCL_ERROR;
+act.c.dcp:    E = S->currentExample;
+act.c.dcp:  if (!S->example || num < 0) {
+act.c.dcp:    if (num >= S->numExamples) 
+act.c.dcp:    if (S->loadExample(S->example[num])) return TCL_ERROR;
+act.c.dcp:  E = S->currentExample;
+command.c:    s = S->s;
+display.4.18.c:  if (!S->pipeExample) 
+display.4.18.c:    return warning("example set %s has no pipe example", S->name);
+display.4.18.c:  if (S->pipeExample->name)
+display.4.18.c:    eval(".unit.l.list insert end {%s}", S->pipeExample->name);
+display.4.18.c:    if (S->mode == PIPE && displayPipeExample(S)) return TCL_ERROR;
+display.4.18.c:  for (i = 0; i < S->numExamples; i++) {
+display.4.18.c:    if (S->example[i]->name)
+display.4.18.c:      eval(".unit.l.list insert end {%s}", S->example[i]->name);
+display.4.18.c:    else eval(".unit.l.list insert end %d", S->example[i]->num);
+display.c:  if (!S->pipeExample) 
+display.c:    return warning("example set %s has no pipe example", S->name);
+display.c:  if (S->pipeExample->name)
+display.c:    eval(".unit.l.list insert end {%s}", S->pipeExample->name);
+display.c:    if (S->mode == PIPE && displayPipeExample(S)) return TCL_ERROR;
+display.c:  for (i = 0; i < S->numExamples; i++) {
+display.c:    if (S->example[i]->name)
+display.c:      eval(".unit.l.list insert end {%s}", S->example[i]->name);
+display.c:    else eval(".unit.l.list insert end %d", S->example[i]->num);
+example.c:  S->num = Root->numExampleSets - 1;
+example.c:  Root->set[S->num] = S;
+example.c:  eval("catch {.initExSet root.set(%d)}", S->num);
+example.c:  for (s = S->num; s < Root->numExampleSets; s++) {
+example.c:    if (!S->firstExample) {
+example.c:    S->firstExample = E;
+example.c:    S->lastExample = E;
+example.c:    S->lastExample->next = E;
+example.c:    S->lastExample = E;
+example.c:  S->numExamples++;
+example.c:  S->name               = copyString(name);
+example.c:  S->pipeLoop           = DEF_S_pipeLoop;
+example.c:  S->maxTime            = DEF_S_maxTime;
+example.c:  S->minTime            = DEF_S_minTime;
+example.c:  S->graceTime          = DEF_S_graceTime;
+example.c:  S->defaultInput       = DEF_S_defaultInput;
+example.c:  S->activeInput        = DEF_S_activeInput;
+example.c:  S->defaultTarget      = DEF_S_defaultTarget;
+example.c:  S->activeTarget       = DEF_S_activeTarget;
+example.c:  S->loadEvent          = standardLoadEvent;
+example.c:  S->loadExample        = standardLoadExample;
+example.c:  S->numGroupNames      = 0;
+example.c:  S->maxGroupNames      = 0;
+example.c:  S->groupName          = NULL;
+example.c:  V->defaultInput  = S->defaultInput;
+example.c:  V->activeInput   = S->activeInput;
+example.c:  V->defaultTarget = S->defaultTarget;
+example.c:  V->activeTarget  = S->activeTarget;
+example.c:  if (!SAME(V->defaultInput, S->defaultInput))   return FALSE;
+example.c:  if (!SAME(V->activeInput, S->activeInput))     return FALSE;
+example.c:  if (!SAME(V->defaultTarget, S->defaultTarget)) return FALSE;
+example.c:  if (!SAME(V->activeTarget, S->activeTarget))   return FALSE;
+example.c:  FREE(S->name);
+example.c:  for (E = S->firstExample; E; E = N) {
+example.c:  FREE(S->example);
+example.c:  FREE(S->permuted);
+example.c:  if (S->proc) Tcl_DecrRefCount(S->proc);
+example.c:  if (S->pipeParser) {
+example.c:    parseError(S->pipeParser, "");
+example.c:    free(S->pipeParser);
+example.c:  FREE(S->groupName);
+example.c:  for (S->numExamples = 0, S->numEvents = 0, E = S->firstExample; 
+example.c:       E; E = E->next, S->numExamples++)
+example.c:    S->numEvents += E->numEvents;
+example.c:  FREE(S->example);
+example.c:  if (S->numExamples)
+example.c:    S->example = (Example *) safeMalloc(S->numExamples * sizeof(Example),
+example.c:					"compileExampleSet:S->example");
+example.c:  FREE(S->permuted);
+example.c:  if (S->numExamples)
+example.c:    S->permuted = (Example *) safeMalloc(S->numExamples * sizeof(Example),
+example.c:					 "compileExampleSet:S->permuted");
+example.c:  for (i = 0, E = S->firstExample; E; E = E->next, i++) {
+example.c:    S->example[i] = S->permuted[i] = E;
+example.c:    for (E = S->firstExample; E; E = E->next)
+example.c:      eval("catch {.initExample root.set(%d).example(%d)}", S->num, E->num);
+example.c:    for (E = S->firstExample; E; E = E->next)
+example.c:	     S->num, E->num, v);
+example.c:  if (S->numExamples) {
+example.c:    for (i = 0, sum = 0.0; i < S->numExamples; i++) {
+example.c:      sum += S->example[i]->frequency * scale;
+example.c:      S->example[i]->probability = sum;
+example.c:    S->example[S->numExamples - 1]->probability = 1.0;
+example.c:  S->currentExample = NULL;
+example.c:  S->currentExampleNum = -1;
+example.c:  for (i = 0; i < S->numGroupNames && strcmp(S->groupName[i], name); i++);
+example.c:  if (i == S->numGroupNames) {
+example.c:    if (S->maxGroupNames == 0) {
+example.c:      S->maxGroupNames = 16;
+example.c:      S->groupName = (char **) safeMalloc(S->maxGroupNames * sizeof(char *),
+example.c:    } else if (i == S->maxGroupNames) {
+example.c:      S->maxGroupNames *= 2;
+example.c:      S->groupName = (char **) safeRealloc(S->groupName, 
+example.c:	    S->maxGroupNames * sizeof(char *), "registerGroupName");
+example.c:    S->groupName[S->numGroupNames++] = copyString(name);
+example.c:  return S->groupName[i];
+example.c:      S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
+example.c:      Tcl_IncrRefCount(S->proc);
+example.c:      if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
+example.c:      if (readReal(R, &(S->maxTime))) {
+example.c:      if (readReal(R, &(S->minTime))) {
+example.c:      if (readReal(R, &(S->graceTime))) {
+example.c:      if (readReal(R, &(S->defaultInput))) {
+example.c:      if (readReal(R, &(S->activeInput))) {
+example.c:      if (readReal(R, &(S->defaultTarget))) {
+example.c:      if (readReal(R, &(S->activeTarget))) {
+example.c:    if (S->pipeParser)
+example.c:      parseError(S->pipeParser, "");
+example.c:      S->pipeParser = (ParseRec) safeMalloc(sizeof(struct parseRec), 
+example.c:					    "readExampleSet:S->pipeParser");
+example.c:    S->pipeParser->channel = R->channel;
+example.c:    S->pipeParser->fileName = R->fileName;
+example.c:    S->pipeParser->line = R->line;
+example.c:    S->pipeParser->buf = R->buf;
+example.c:    S->pipeParser->s = R->s;
+example.c:    S->pipeParser->binary = FALSE;
+example.c:    memcpy(S->pipeParser->cookie, R->cookie, sizeof(int));
+example.c:    S->pipeParser->cookiePos = R->cookiePos;
+example.c:    if (lookupExampleSet(S->name))
+example.c:    S->proc = Tcl_NewStringObj(buf->s, buf->numChars);
+example.c:    Tcl_IncrRefCount(S->proc);
+example.c:    if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
+example.c:  if (readBinReal(channel, &S->maxTime)) {
+example.c:  if (readBinReal(channel, &S->minTime)) {
+example.c:  if (readBinReal(channel, &S->graceTime)) {
+example.c:  if (readBinReal(channel, &S->defaultInput)) {
+example.c:  if (readBinReal(channel, &S->activeInput)) {
+example.c:  if (readBinReal(channel, &S->defaultTarget)) {
+example.c:  if (readBinReal(channel, &S->activeTarget)) {
+example.c:    if (S->pipeParser)
+example.c:      parseError(S->pipeParser, "");
+example.c:      S->pipeParser = (ParseRec) safeMalloc(sizeof(struct parseRec), 
+example.c:					    "readExampleSet:S->pipeParser");
+example.c:    S->pipeParser->channel = R->channel;
+example.c:    S->pipeParser->fileName = R->fileName;
+example.c:    S->pipeParser->line = R->line;
+example.c:    S->pipeParser->buf = NULL;
+example.c:    S->pipeParser->s = NULL;
+example.c:    S->pipeParser->binary = TRUE;
+example.c:    if (lookupExampleSet(S->name))
+example.c:  ParseRec R = S->pipeParser;
+example.c:	    S->name);
+example.c:    if (S->pipeLoop) {
+example.c:      readExampleSet(S->name, R->fileName, &S, TRUE, 0);
+example.c:      error("example set \"%s\" has exhausted the pipe", S->name);
+example.c:  cleanExample(S->pipeExample);
+example.c:  clearExample(S->pipeExample);
+example.c:    if (readBinaryExample(S->pipeExample, R))
+example.c:    if (readExample(S->pipeExample, R))
+example.c:  S->pipeExampleNum++;
+example.c:  cleanExample(S->pipeExample);
+example.c:  clearExample(S->pipeExample);
+example.c:  S->pipeParser = NULL;
+example.c:  S->pipeExampleNum = 0;
+example.c:  /* fprintf(file, "%d %d", S->numInputs, S->numTargets); */
+example.c:    if (S->proc) 
+example.c:      cprintf(channel, "\nproc:{%s}", Tcl_GetStringFromObj(S->proc, NULL));
+example.c:    if (!SAME(S->maxTime, DEF_S_maxTime))
+example.c:      writeReal(channel, S->maxTime, "\nmax:", "");
+example.c:    if (!SAME(S->minTime, DEF_S_minTime))
+example.c:      writeReal(channel, S->minTime, "\nmin:", "");
+example.c:    if (!SAME(S->graceTime, DEF_S_graceTime))
+example.c:      writeReal(channel, S->graceTime, "\ngrace:", "");
+example.c:    if (!SAME(S->defaultInput, DEF_S_defaultInput))
+example.c:      writeReal(channel, S->defaultInput, "\ndefI:", "");
+example.c:    if (!SAME(S->activeInput, DEF_S_activeInput))
+example.c:      writeReal(channel, S->activeInput, "\nactI:", "");
+example.c:    if (!SAME(S->defaultTarget, DEF_S_defaultTarget))
+example.c:      writeReal(channel, S->defaultTarget, "\ndefT:", "");
+example.c:    if (!SAME(S->activeTarget, DEF_S_activeTarget))
+example.c:      writeReal(channel, S->activeTarget, "\nactT:", "");
+example.c:  for (E = S->firstExample, halted = FALSE; E && !halted; E = E->next) {
+example.c:	if (!SAME(V->defaultInput, S->defaultInput))
+example.c:	if (!SAME(V->activeInput, S->activeInput))
+example.c:	if (!SAME(V->defaultTarget, S->defaultTarget))
+example.c:	if (!SAME(V->activeTarget, S->activeTarget))
+example.c:  writeBinInt(file, S->numInputs);
+example.c:  writeBinInt(file, S->numTargets);
+example.c:  if (S->proc) {
+example.c:    s = Tcl_GetStringFromObj(S->proc, &len);
+example.c:  writeBinReal(channel, S->maxTime);
+example.c:  writeBinReal(channel, S->minTime);
+example.c:  writeBinReal(channel, S->graceTime);
+example.c:  writeBinReal(channel, S->defaultInput);
+example.c:  writeBinReal(channel, S->activeInput);
+example.c:  writeBinReal(channel, S->defaultTarget);
+example.c:  writeBinReal(channel, S->activeTarget);
+example.c:  writeBinInt(channel, S->numExamples);
+example.c:  for (E = S->firstExample, halted = FALSE; E && !halted; E = E->next) {
+example.c:  if (S->pipeParser) {
+example.c:    S->currentExample = S->pipeExample;
+example.c:    clearExample(S->currentExample);
+example.c:    S->currentExample = NULL;
+example.c:  S->currentExampleNum = -1;
+example.c:    if (!S->pipeParser) 
+example.c:      return error("exampleSetMode: set \"%s\" has no pipe open", S->name);
+example.c:    S->pipeExampleNum = 0;
+example.c:    if (!S->pipeExample) S->pipeExample = newExample(S);
+example.c:  S->mode = mode;
+example.c:  S->nextExample = nextExample(S->mode);
+example.c:/* This sets S->currentExample, runs proc, but does not start first event */
+example.c:  S->currentExample = Net->currentExample = E;
+example.c:  if (S->numExamples <= 0) 
+example.c:  if (++S->currentExampleNum == S->numExamples) S->currentExampleNum = 0;
+example.c:  return S->loadExample(S->example[S->currentExampleNum]);
+example.c:  if (S->numExamples <= 0) 
+example.c:  i = ++S->currentExampleNum;
+example.c:  if (i == S->numExamples) i = 0;
+example.c:  temp = S->permuted[i];
+example.c:  next = i + randInt(S->numExamples - i);
+example.c:  S->permuted[i] = S->permuted[next];
+example.c:  S->permuted[next] = temp;
+example.c:  S->currentExampleNum = i;
+example.c:  return S->loadExample(S->example[S->permuted[i]->num]);
+example.c:  if (S->numExamples <= 0) 
+example.c:  S->currentExampleNum = randInt(S->numExamples);
+example.c:  return S->loadExample(S->example[S->currentExampleNum]);
+example.c:  int l = 0, r = S->numExamples - 1, m;
+example.c:  if (S->numExamples <= 0) 
+example.c:    if (S->example[m]->probability < prob) l = m + 1;
+example.c:  S->currentExampleNum = l;
+example.c:  return S->loadExample(S->example[l]);
+example.c:  S->currentExampleNum = -1;
+example.c:  return S->loadExample(S->pipeExample);
+example.c:  if (!S->chooseExample) 
+example.c:		   S->name);
+example.c:  if (Tcl_EvalObj(Interp, S->chooseExample)) return TCL_ERROR;
+example.c:  if (n < 0 || n >= S->numExamples) 
+example.c:  return S->loadExample(S->example[n]);
+example.c:   call S->loadExample */
+example.c:  return S->nextExample(S);
+exampleCom.c:  if ((S = lookupExampleSet(setName)) && S->mode != exmode)
+exampleCom.c:      /* if (S->checkCompatibility(S) == TCL_OK) */
+exampleCom.c:      append("\"%s\" ", S->name);
+exampleCom.c:    if (S->checkCompatibility(S))
+exampleCom.c:      /* if (S->checkCompatibility(S) == TCL_OK) */
+exampleCom.c:      append("\"%s\" ", S->name);
+exampleCom.c:    if (S->checkCompatibility(S))
+exampleCom.c:      if (!(modeName = (char *) lookupTypeName(S->mode, EXAMPLE_MODE)))
+exampleCom.c:		       argv[0], S->name, S->mode);
+exampleCom.c:      append("{%s} %s\n", S->name, modeName);
+extension.c:  FREE(S->ext);
+extension.c:  FREE(S->ext);
+extension.c.old:  FREE(S->ext);
+extension.c.old:  FREE(S->ext);
+graph.c:  S->object    = copyString(T->object);
+graph.c:  S->numVals   = T->numVals;
+graph.c:  S->maxVals   = T->numVals;
+graph.c:  S->val       = (point *) safeMalloc(S->numVals * sizeof(point), "S->val");
+graph.c:  memcpy(S->val, T->val, S->numVals * sizeof(point));
+graph.c:  S->color     = nextColor();
+graph.c:  S->active    = FALSE;
+graph.c:  S->transient = TRUE;
+graph.c:  S->visible   = TRUE;
+graphCom.c:    if (!createTrace(G, S->s)) return TCL_ERROR;
+networkCom.c:    if (S->numChars) S->s[--S->numChars] = '\0';
+networkCom.c:    result(S->s);
+object.c:  if (S && S->name) sprintf(dest, "%s", S->name);
+objectCom.c:    return result("root.set(%d)", S->num);
+objectCom.c:  return result("root.set(%d)", S->num);
+type.c:	if (isNaN(min)) min = S->minOutput;
+type.c:	else min += S->minOutput;
+type.c:	if (isNaN(max)) max = S->maxOutput;
+type.c:	else max += S->maxOutput;
+type.c:	init = S->initOutput;
+util.c:  S->maxChars = maxChars;
+util.c:  if (maxChars < 1) S->maxChars = 1;
+util.c:  S->numChars = 0;
+util.c:  S->s = (char *) safeMalloc(maxChars, "NewString:S->s");
+util.c:  S->s[0] = '\0';
+util.c:  strcpy(S->s, s);
+util.c:  S->numChars = len;
+util.c:  if (S->maxChars <= maxChars) {
+util.c:    S->maxChars = maxChars + 1;
+util.c:    S->s = (char *) safeRealloc(S->s, S->maxChars, "StringSize:S->s");
+util.c:  if ((S->numChars + 1) >= S->maxChars) {
+util.c:    S->maxChars *= 2;
+util.c:    S->s = (char *) safeRealloc(S->s, S->maxChars, "StringCat:S->s");
+util.c:  S->s[S->numChars] = c;
+util.c:  if (c != '\0') S->s[++S->numChars] = '\0';
+util.c:  if (S->maxChars <= idx) {
+util.c:    S->maxChars = ((S->maxChars * 2) > (idx + 1)) ? S->maxChars * 2 : idx + 1;
+util.c:    S->s = (char *) safeRealloc(S->s, S->maxChars, "StringSet:S->s");
+util.c:  S->s[idx] = c;
+util.c:  if ((S->numChars + tlen + 1) > S->maxChars) {
+util.c:    S->maxChars = ((S->maxChars * 2) > (S->numChars + tlen + 1)) ? 
+util.c:      S->maxChars * 2 : S->numChars + tlen + 1;
+util.c:    S->s = (char *) safeRealloc(S->s, S->maxChars, "StringAppend:S->s");
+util.c:  memcpy(S->s + S->numChars, t, tlen + 1);
+util.c:  S->numChars += tlen;
+util.c:  S->numChars = 0;
+util.c:  S->s[0] = '\0';
+util.c:    FREE(S->s);
+util.c:  while ((bytes = Tcl_Read(channel, S->s + S->numChars, 
+util.c:			   S->maxChars - S->numChars)) > 0) {
+util.c:    S->numChars += bytes;
+util.c:    if ((S->numChars * 2) > S->maxChars)
+util.c:      S->maxChars *= 2;
+util.c:    S->s = (char *) safeRealloc(S->s, S->maxChars, "readFileIntoString:S->s");
+util.c:  S->s[S->numChars++] = '\0';
+util.c:  if (!S->numChars || S->s[S->numChars - 1] != '\n') {
+util.c:  if (S->numChars && S->s[S->numChars - 1] == '\n')
+util.c:    S->s[--S->numChars] = '\0';
+util.c:  memcpy(S->s, R->s, len);
+util.c:  S->numChars = len;
+util.c:  S->s[len] = '\0';
+util.c:      if (S->numChars) stringAppend(S, "\n");
