@@ -979,14 +979,14 @@ def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxE
     while (not fileDone(R)) and (not halted) and (not maxExamples or examplesRead < maxExamples):
         E = Example(S)
         if read_example(E, R):
-            return (S, E)
+            return TCL_ERROR
         register_example(E, S)
-
-        halted = smartUpdate(False)
+        halted = False
+        #halted = smartUpdate(False)
     """/ *This is called to clean up the parser * /"""
     parseError(R, "")
     compileExampleSet(S)
-    if (halted):
+    if halted:
         return result("readExampleSet: halted prematurely")
     return TCL_OK
 
