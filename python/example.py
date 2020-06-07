@@ -1001,7 +1001,8 @@ def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
         # deleteExampleSet(S);
         S = None
     if not S or mode != 0:
-        if readExampleSet(setName, fileName, S, mode, numExamples):
+        bool_val = mode == 3
+        if readExampleSet(setName, fileName, S, bool_val, numExamples):
             # deleteExampleSet(S);
             return TCL_ERROR
     return  # result(setName)
