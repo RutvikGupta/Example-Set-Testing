@@ -203,6 +203,12 @@ class ParseRec:
         self.parsed_s = 0
         self.s_list = self.s.split(" ")
 
+    """Prints an error message and returns TCL_ERROR"""
+
+    def parseError(self, fmt: str) -> bool:
+        print("loadExample: " + fmt + "on " + "line " + str(self.line) + " of file " + self.fileName)
+        return TCL_ERROR
+
     def readInt(self):
         if self.parsed_s >= len(self.s_list):
             return TCL_ERROR
@@ -354,14 +360,6 @@ def normalEvent(V: Event, S: ExampleSet) -> bool:
         return True
 
 
-"""Prints an error message and returns TCL_ERROR"""
-
-
-def parseError(R: ParseRec, fmt: str) -> bool:
-    print("loadExample: " + fmt + "on " + "line " + str(R.line) + " of file " + R.fileName)
-    return TCL_ERROR
-
-
 """Not sure but we dont need this code even """
 # # do we need custom memory management?
 # def freeExampleSet(S: ExampleSet):
@@ -475,17 +473,17 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
             if event_list[i].isdigit():  # ! C functions
                 i += 1
                 lst[0] = event_list[i]
-                # return parseError(R, "error reading event list")
+                # return R.parseError("error reading event list")
             if lst[0] < 0 or lst[0] >= num:
-                return parseError(R, "event" + str(lst[-1]) + " out of range")
+                return R.parseError("event" + str(lst[-1]) + " out of range")
             if i < len(event_list) and event_list[i] == "-":
                 i += 1
                 if i < len(event_list) and event_list[i].isdigit():
                     i += 1
                     lst[1] = event_list[i]
-                    # return parseError(R, "error reading event range")
+                    # return R.parseError("error reading event range")
                 if lst[-1] <= lst[-2] or lst[-1] >= num:
-                    return parseError(R, "event" + str(lst[-1]) + " out of range")
+                    return R.parseError("event" + str(lst[-1]) + " out of range")
             else:
                 lst[-1] = lst[-2]
             while lst[-2] <= lst[-1]:
@@ -550,18 +548,18 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                 if R.isNumber():
                     x = R.readReal()
                     if x is TCL_ERROR:
-                        return parseError(R, "couldn't read sparse active value")
+                        return R.parseError("couldn't read sparse active value")
                     else:
                         L.value = x
                 else:
                     if R.readBlock(buf):
-                        return parseError(R, Tcl_GetStringResult(Interp))
+                        return R.parseError(Tcl_GetStringResult(Interp))
 
 
                     if buf.s[0]:
                         L.groupName = register_group_name(buf.s, S)
                         if not L.groupName:
-                            return parseError(R, "too many group names used")
+                            return R.parseError("too many group names used")
 
             sparseMode = True
         elif R.stringMatch("("):
@@ -573,22 +571,22 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                     if v != False:
                         L.firstUnit = v
                     else:
-                        return parseError(R, "couldn't read dense first unit")
+                        return R.parseError("couldn't read dense first unit")
                 else:
                     if readBlock(R, buf):
-                        return parseError(R, Tcl_GetStringResult(Interp))
+                        return R.parseError(Tcl_GetStringResult(Interp))
 
                     if buf.s[0]:
                         L.groupName = register_group_name(buf.s, S)
                         if not L.groupName:
-                            return parseError(R, "too many groups used")
+                            return R.parseError("too many groups used")
             sparseMode = False
 
         elif R.stringMatch("*"):
             if not L:
                 L = Range(V, doingInputs, L)
             if (not sparseMode) or L.numUnits:
-                return parseError(R, "* may only be the first thing in a sparse range")
+                return R.parseError("* may only be the first thing in a sparse range")
 
             if L.numUnits >= maxUnits:
                 maxUnits *= 2
@@ -601,7 +599,7 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                 L = Range(V, doingInputs, L)
             if sparseMode:
                 if L.numUnits and unit[0] < 0:
-                    return parseError(R, "cannot have other units listed after *")
+                    return R.parseError("cannot have other units listed after *")
 
                 if L.numUnits >= maxUnits:
                     maxUnits *= 2
@@ -610,11 +608,11 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                 if res is not False:
                     unit[L.numUnits] = res
                 else:
-                    return parseError(R, "error reading a sparse unit number")
+                    return R.parseError("error reading a sparse unit number")
 
 
                 if unit[L.numUnits] < 0 and (L.numUnits == 0 or ((0 -unit[L.numUnits]) < unit[L.numUnits - 1])):
-                    return parseError(R, "invalid sparse unit range")
+                    return R.parseError("invalid sparse unit range")
                 L.numUnits += 1
             else:
                 if L.numUnits >= maxvals:
@@ -622,7 +620,7 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                     val = []
                 x = R.readReal()
                 if x is TCL_ERROR:
-                    return parseError(R, "couldn't read dense values")
+                    return R.parseError("couldn't read dense values")
                 else:
                     val[L.numUnits] = x
                 L.numUnits += 1
@@ -644,7 +642,7 @@ def read_example(E: Example, R: ParseRec):
 
     # read the example header
     if fileDone(R):
-        return parseError(R, "file ended prematurely at start of an example")
+        return R.parseError("file ended prematurely at start of an example")
     E.numEvents = 1
 
     done = False
@@ -654,18 +652,18 @@ def read_example(E: Example, R: ParseRec):
 
         if R.stringMatch("name:"):
             if R.readblock(buf):
-                return parseError(R, "error reading example name")
+                return R.parseError("error reading example name")
 
             #copyString is just to take
             E.name = buf.s
             done = False
         if R.stringMatch("freq:"):
             if R.readReal(E.frequency):
-                return parseError(R, "error reading example frequency")
+                return R.parseError("error reading example frequency")
             done = False
         if R.stringMatch("proc:"):
             if R.readblock(buf):
-                return parseError(R, "error reading example proc")
+                return R.parseError("error reading example proc")
             E.proc = Tcl_NewStringObj(buf.s, strlen(buf.s))
             Tcl_IncrRefCount(E.proc)
             done = False
@@ -673,9 +671,9 @@ def read_example(E: Example, R: ParseRec):
         R.skipBlank()
         if R.s[0].isdigit():
             if R.readInt(E.numEvents):
-                return parseError(R, "error reading num-events")
+                return R.parseError("error reading num-events")
             if E.numEvents <= 0:
-                return parseError(R, "num-events (%d) must be positive", E.numEvents)
+                return R.parseError("num-events (%d) must be positive", E.numEvents)
             done = False
 
     # allocate memory
@@ -701,7 +699,7 @@ def read_example(E: Example, R: ParseRec):
                     V = E.event + v
                     v -= 1
             if not V:
-                parseError(R, "no events specified")
+                return R.parseError("no events specified")
                  
                  
 
@@ -709,7 +707,7 @@ def read_example(E: Example, R: ParseRec):
             while not R.stringMatch("]"):
                 if R.stringMatch("proc:"):
                     if R.readblock(buf):
-                        return parseError(R, "error reading example proc")
+                        return R.parseError("error reading example proc")
                     w = v
                     while w < E.numEvents:
                         if eventActive[w]:
@@ -719,7 +717,7 @@ def read_example(E: Example, R: ParseRec):
                             w += 1
                 elif R.stringMatch("max:"):
                     if R.readReal(V.maxTime):
-                        parseError(R, "missing value after \"max:\" in event header")
+                        R.parseError("missing value after \"max:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
@@ -727,7 +725,7 @@ def read_example(E: Example, R: ParseRec):
                             E.event[w].maxTime = V.maxTime
                 elif R.stringMatch("min:"):
                     if R.readReal(V.minTime):
-                        parseError(R, "missing value after \"min:\" in event header")
+                        return R.parseError("missing value after \"min:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
@@ -735,7 +733,7 @@ def read_example(E: Example, R: ParseRec):
                             E.event[w].minTime = V.minTime
                 elif R.stringMatch("grace:"):
                     if R.readReal(V.graceTime):
-                        parseError(R, "missing value after \"grace:\" in event header")
+                        return R.parseError("missing value after \"grace:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
@@ -743,7 +741,7 @@ def read_example(E: Example, R: ParseRec):
                             E.event[w].graceTime = V.graceTime
                 elif R.stringMatch("defI:"):
                     if R.readReal(V.defaultInput):
-                        parseError(R, "missing value after \"defI:\" in event header")
+                        return R.parseError("missing value after \"defI:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
@@ -751,7 +749,7 @@ def read_example(E: Example, R: ParseRec):
                             E.event[w].defaultInput = V.defaultInput
                 elif R.stringMatch("actI:"):
                     if R.readReal(V.activeInput):
-                        parseError(R, "missing value after \"actI:\" in event header")
+                        return R.parseError("missing value after \"actI:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
@@ -759,7 +757,7 @@ def read_example(E: Example, R: ParseRec):
                             E.event[w].activeInput = V.activeInput
                 elif R.stringMatch("defT:"):
                     if R.readReal(V.defaultTarget):
-                        parseError(R, "missing value after \"defT:\" in event header")
+                        return R.parseError("missing value after \"defT:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
@@ -767,14 +765,14 @@ def read_example(E: Example, R: ParseRec):
                             E.event[w].defaultTarget = V.defaultTarget
                 elif R.stringMatch("actT:"):
                     if R.readReal(V.activeTarget):
-                        parseError(R, "missing value after \"actT:\" in event header")
+                        return R.parseError("missing value after \"actT:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
                         if eventActive[w]:
                             E.event[w].activeTarget = V.activeTarget
                 else:
-                    parseError(R, "something unexpected (%s) in event header", R.s)
+                    return R.parseError("something unexpected (%s) in event header", R.s)
                      
                      
         elif R.stringPeek("I:") or R.stringPeek("i:") or R.stringPeek("T:") or \
@@ -803,7 +801,7 @@ def read_example(E: Example, R: ParseRec):
                 if inputsSeen:
                     # /* Inputs have already been given since the last event list */
                     if nextInputEvent >= E.numEvents:
-                        parseError(R, "attempted to specify inputs for event %d", nextInputEvent)
+                        return R.parseError("attempted to specify inputs for event %d", nextInputEvent)
                          
                          
                     I = E.event + nextInputEvent
@@ -815,18 +813,18 @@ def read_example(E: Example, R: ParseRec):
                             I = E.event
                             v -= 1
                     if not I:
-                        parseError(R, "no events specified")
+                        return R.parseError("no events specified")
                          
                          
                     if I.input:
-                        parseError(R, "multiple inputs given for event %d", v)
+                        return R.parseError("multiple inputs given for event %d", v)
                          
                          
             if doingTargets:
                 if targetsSeen:
                     #  /* Targets have already been given since the last event list */
                     if nextTargetEvent >= E.numEvents:
-                        parseError(R, "attempted to specify targets for event %d", nextTargetEvent)
+                        return R.parseError("attempted to specify targets for event %d", nextTargetEvent)
                          
                          
                     T = E.event + nextTargetEvent
@@ -838,11 +836,11 @@ def read_example(E: Example, R: ParseRec):
                         T = E.event + v
                         v -= 1
                 if not T:
-                    parseError(R, "no events specified")
+                    return R.parseError("no events specified")
                      
                      
                 if T.target:
-                    parseError(R, "multiple targets given for event %d", v)
+                    return R.parseError("multiple targets given for event %d", v)
                      
                      
 
@@ -855,7 +853,7 @@ def read_example(E: Example, R: ParseRec):
                  
             if I and T:
                 if T.target:
-                    parseError(R, "multiple targets specified for event %d", \
+                    return R.parseError("multiple targets specified for event %d", \
                                (targetsSeen) ? nextTargetEvent - 1: v)
 
 
@@ -866,7 +864,7 @@ def read_example(E: Example, R: ParseRec):
                         if eventActive[w]:
                             W = E.event + w
                             if W.input:
-                                parseError(R, "multiple inputs given for event %d", w)
+                                return R.parseError("multiple inputs given for event %d", w)
 
                             W.input = I.input
                             W.sharedInputs = True
@@ -880,7 +878,7 @@ def read_example(E: Example, R: ParseRec):
                         if eventActive[w]:
                             W = E.event + w
                             if W.target:
-                                parseError(R, "multiple targets given for event %d", w)
+                                return R.parseError("multiple targets given for event %d", w)
 
                             W.target = T.target
                             W.sharedTargets = True
@@ -909,7 +907,7 @@ def read_example(E: Example, R: ParseRec):
         R.s = None
         R.line = 0
         if startParser(R, HTONL(val)):
-            return parseError(R, "couldn't read the header")
+            return R.parseError("couldn't read the header")
         R.readInt()
         R.readInt()
         if not S:
@@ -919,8 +917,8 @@ def read_example(E: Example, R: ParseRec):
         while not R.stringMatch(";"):
             if R.stringMatch("proc:"):
                 if R.readBlock(buf):
-                    parseError(R, "error reading code segment")
-                    return
+                    return R.parseError("error reading code segment")
+
                     # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
                 # Tcl_IncrRefCount(S->proc);
                 # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
@@ -928,49 +926,49 @@ def read_example(E: Example, R: ParseRec):
             elif R.stringMatch("max:"):
                 x = R.readReal()
                 if x is False:
-                    return parseError(R, "missing value after \"max:\" in the set header")
+                    return R.parseError("missing value after \"max:\" in the set header")
                 else:
                     S.maxTime = x
 
             elif R.stringMatch("min:"):
                 x = R.readReal()
                 if x is False:
-                    return parseError(R, "missing value after \"min:\" in the set header")
+                    return R.parseError("missing value after \"min:\" in the set header")
                 else:
                     S.minTime = x
 
             elif R.stringMatch("grace:"):
                 x = R.readReal()
                 if x is False:
-                    return parseError(R, "missing value after \"grace:\" in the set header")
+                    return R.parseError("missing value after \"grace:\" in the set header")
                 else:
                     S.graceTime = x
 
             elif R.stringMatch("defI:"):
                 x = R.readReal()
                 if x is False:
-                    return parseError(R, "missing value after \"defI:\" in the set header")
+                    return R.parseError("missing value after \"defI:\" in the set header")
                 else:
                     S.defaultInput = x
 
             elif R.stringMatch("actI:"):
                 x = R.readReal()
                 if x is False:
-                    return parseError(R, "missing value after \"actI:\" in the set header")
+                    return R.parseError("missing value after \"actI:\" in the set header")
                 else:
                     S.activeInput = x
 
             elif R.stringMatch("defT:"):
                 x = R.readReal()
                 if x is False:
-                    return parseError(R, "missing value after \"defT:\" in the set header")
+                    return R.parseError("missing value after \"defT:\" in the set header")
                 else:
                     S.defaultTarget = x
 
             elif R.stringMatch("actT:"):
                 x = R.readReal()
                 if x is False:
-                    return parseError(R, "missing value after \"actT:\" in the set header")
+                    return R.parseError("missing value after \"actT:\" in the set header")
                 else:
                     S.activeTarget = x
             else:
@@ -984,7 +982,7 @@ def read_example(E: Example, R: ParseRec):
 
             halted = smartUpdate(False)
         """/ *This is called to clean up the parser * /"""
-        parseError(R, "")
+        return R.parseError("")
         compileExampleSet(S)
         if (halted):
             return result("readExampleSet: halted prematurely")
