@@ -236,6 +236,11 @@ class ParseRec:
         regex = re.compile(r'[+-]?([0-9]*[.])?[0-9]+')
         return bool(regex.match(self.s_list[self.parsed_s]))
 
+    def readBlock(self):
+        #TODO
+        pass
+
+
 
 
 def initEvent(V: Event, E: Example):
