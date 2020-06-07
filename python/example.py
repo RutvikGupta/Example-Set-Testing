@@ -891,148 +891,148 @@ def read_example(E: Example, R: ParseRec):
 
         # TODO: ifdef JUNK block
 
-    def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxExamples: int):
-        S = Sp
-        E = Example(Sp)
-        val, examplesRead = 0, 0
-        halted = False
-        R = ParseRec()
-        R.fileName = fileName
-        R.buf = None
-        R.s = None
-        R.line = 0
-        R.channel = readChannel(fileName)
-        if not R.channel:
-            return "readExampleSet: couldn't open the file " + fileName
-        R.fileName = fileName
-        R.buf = None
-        R.s = None
-        R.line = 0
-        if startParser(R, HTONL(val)):
-            return parseError(R, "couldn't read the header")
-        R.readInt()
-        R.readInt()
-        if not S:
-            S = ExampleSet(setName)
-            Root.registerExampleSet(S)
+def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxExamples: int):
+    S = Sp
+    E = Example(Sp)
+    val, examplesRead = 0, 0
+    halted = False
+    R = ParseRec()
+    R.fileName = fileName
+    R.buf = None
+    R.s = None
+    R.line = 0
+    R.channel = readChannel(fileName)
+    if not R.channel:
+        return "readExampleSet: couldn't open the file " + fileName
+    R.fileName = fileName
+    R.buf = None
+    R.s = None
+    R.line = 0
+    if startParser(R, HTONL(val)):
+        return parseError(R, "couldn't read the header")
+    R.readInt()
+    R.readInt()
+    if not S:
+        S = ExampleSet(setName)
+        Root.registerExampleSet(S)
 
-        while not R.stringMatch(";"):
-            if R.stringMatch("proc:"):
-                if R.readBlock(buf):
-                    parseError(R, "error reading code segment")
-                    return
-                    # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
-                # Tcl_IncrRefCount(S->proc);
-                # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
-                # return TCL_ERROR;
-            elif R.stringMatch("max:"):
-                x = R.readReal()
-                if x is False:
-                    return parseError(R, "missing value after \"max:\" in the set header")
-                else:
-                    S.maxTime = x
-
-            elif R.stringMatch("min:"):
-                x = R.readReal()
-                if x is False:
-                    return parseError(R, "missing value after \"min:\" in the set header")
-                else:
-                    S.minTime = x
-
-            elif R.stringMatch("grace:"):
-                x = R.readReal()
-                if x is False:
-                    return parseError(R, "missing value after \"grace:\" in the set header")
-                else:
-                    S.graceTime = x
-
-            elif R.stringMatch("defI:"):
-                x = R.readReal()
-                if x is False:
-                    return parseError(R, "missing value after \"defI:\" in the set header")
-                else:
-                    S.defaultInput = x
-
-            elif R.stringMatch("actI:"):
-                x = R.readReal()
-                if x is False:
-                    return parseError(R, "missing value after \"actI:\" in the set header")
-                else:
-                    S.activeInput = x
-
-            elif R.stringMatch("defT:"):
-                x = R.readReal()
-                if x is False:
-                    return parseError(R, "missing value after \"defT:\" in the set header")
-                else:
-                    S.defaultTarget = x
-
-            elif R.stringMatch("actT:"):
-                x = R.readReal()
-                if x is False:
-                    return parseError(R, "missing value after \"actT:\" in the set header")
-                else:
-                    S.activeTarget = x
+    while not R.stringMatch(";"):
+        if R.stringMatch("proc:"):
+            if R.readBlock(buf):
+                parseError(R, "error reading code segment")
+                return
+                # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
+            # Tcl_IncrRefCount(S->proc);
+            # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
+            # return TCL_ERROR;
+        elif R.stringMatch("max:"):
+            x = R.readReal()
+            if x is False:
+                return parseError(R, "missing value after \"max:\" in the set header")
             else:
-                break
-        halted = False
-        while (not fileDone(R)) and (not halted) and (not maxExamples or examplesRead < maxExamples):
-            E = Example(S)
-            if read_example(E, R):
-                return (S, E)
-            register_example(E, S)
+                S.maxTime = x
 
-            halted = smartUpdate(False)
-        """/ *This is called to clean up the parser * /"""
-        parseError(R, "")
-        compileExampleSet(S)
-        if (halted):
-            return result("readExampleSet: halted prematurely")
-        return TCL_OK
+        elif R.stringMatch("min:"):
+            x = R.readReal()
+            if x is False:
+                return parseError(R, "missing value after \"min:\" in the set header")
+            else:
+                S.minTime = x
 
-    """/* A mode of 0 means do nothing if the set exists.
-       1 means override the set
-       2 means add to the set
-       3 means use as a pipe */"""
+        elif R.stringMatch("grace:"):
+            x = R.readReal()
+            if x is False:
+                return parseError(R, "missing value after \"grace:\" in the set header")
+            else:
+                S.graceTime = x
 
-    def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
-        R = Root()
-        S = R.lookupExampleSet(setName)
-        if S and mode == 1:
-            # deleteExampleSet(S);
-            S = None
-        if not S or mode != 0:
-            if readExampleSet(setName, fileName, S, mode, numExamples):
-                # deleteExampleSet(S);
-                return TCL_ERROR
-        return  # result(setName)
+        elif R.stringMatch("defI:"):
+            x = R.readReal()
+            if x is False:
+                return parseError(R, "missing value after \"defI:\" in the set header")
+            else:
+                S.defaultInput = x
 
-    """/ *This puts all the examples in arrays and does some other calculations * /"""
+        elif R.stringMatch("actI:"):
+            x = R.readReal()
+            if x is False:
+                return parseError(R, "missing value after \"actI:\" in the set header")
+            else:
+                S.activeInput = x
 
-    def compileExampleSet(S: ExampleSet):
+        elif R.stringMatch("defT:"):
+            x = R.readReal()
+            if x is False:
+                return parseError(R, "missing value after \"defT:\" in the set header")
+            else:
+                S.defaultTarget = x
+
+        elif R.stringMatch("actT:"):
+            x = R.readReal()
+            if x is False:
+                return parseError(R, "missing value after \"actT:\" in the set header")
+            else:
+                S.activeTarget = x
+        else:
+            break
+    halted = False
+    while (not fileDone(R)) and (not halted) and (not maxExamples or examplesRead < maxExamples):
         E = Example(S)
-        i, v = 0, 0
-        totalFreq = 0.0
-        scale, sum = 0.0, 0.0
-        # struct Tcl_CmdInfo junk;
-        # / *Count the number of examples and events * /
-        S.numExamples = 0
-        S.numEvents = 0
-        E = S.firstExample
-        while E:
-            S.numEvents += E.numEvents
-            E = E.next
-            S.numExamples += 1
+        if read_example(E, R):
+            return (S, E)
+        register_example(E, S)
 
-        # / * Build the example and permuted arrays * /
-        S.example = []
-        S.permuted = []
-        # / * Fill the arrays and call the user-defined init procedures on each example and event * /
-        i = 0
-        E = S.firstExample
-        while E:
-            S.example[i], S.permuted[i] = E, E
-            E.num = i
-            totalFreq += E.frequency
-            E = E.next
-            i += 1
+        halted = smartUpdate(False)
+    """/ *This is called to clean up the parser * /"""
+    parseError(R, "")
+    compileExampleSet(S)
+    if (halted):
+        return result("readExampleSet: halted prematurely")
+    return TCL_OK
+
+"""/* A mode of 0 means do nothing if the set exists.
+   1 means override the set
+   2 means add to the set
+   3 means use as a pipe */"""
+
+def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
+    R = Root()
+    S = R.lookupExampleSet(setName)
+    if S and mode == 1:
+        # deleteExampleSet(S);
+        S = None
+    if not S or mode != 0:
+        if readExampleSet(setName, fileName, S, mode, numExamples):
+            # deleteExampleSet(S);
+            return TCL_ERROR
+    return  # result(setName)
+
+"""/ *This puts all the examples in arrays and does some other calculations * /"""
+
+def compileExampleSet(S: ExampleSet):
+    E = Example(S)
+    i, v = 0, 0
+    totalFreq = 0.0
+    scale, sum = 0.0, 0.0
+    # struct Tcl_CmdInfo junk;
+    # / *Count the number of examples and events * /
+    S.numExamples = 0
+    S.numEvents = 0
+    E = S.firstExample
+    while E:
+        S.numEvents += E.numEvents
+        E = E.next
+        S.numExamples += 1
+
+    # / * Build the example and permuted arrays * /
+    S.example = []
+    S.permuted = []
+    # / * Fill the arrays and call the user-defined init procedures on each example and event * /
+    i = 0
+    E = S.firstExample
+    while E:
+        S.example[i], S.permuted[i] = E, E
+        E.num = i
+        totalFreq += E.frequency
+        E = E.next
+        i += 1
