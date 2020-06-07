@@ -1,5 +1,5 @@
 from typing import List
-import re
+import re, math
 
 TCL_ERROR = False
 TCL_OK = True
@@ -211,9 +211,12 @@ class ParseRec:
     def readInt(self):
         if self.parsed_s >= len(self.s_list):
             return TCL_ERROR
-        val = self.s_list.pop(self.parsed_s)
-        self.parsed_s += 1
-        return int(val)
+        if self.s_list[self.parsed_s].isdigit() and "." not in self.s_list[self.parsed_s]:
+            val = self.s_list[self.parsed_s]
+            self.parsed_s += 1
+            return int(val)
+        else:
+            return TCL_ERROR
 
     def readReal(self):
         v = 0.0
@@ -222,13 +225,20 @@ class ParseRec:
         shift = self.parsed_s
         while shift < len(self.s_list) and (not self.s_list[shift] in ",;{}[]"):
             shift += 1
-        if self.s_list[shift] == "-":
-            self.parsed_s = shift
-            return self.s_list[shift]
+        if not self.s_list[shift] == "-":
+            self.parsed_s += shift
+            return float('nan')
         else:
-            x = self.s_list[self.parsed_s]
-            self.parsed_s += 1
-            return float(x)
+            try:
+                float(self.s_list[self.parsed_s])
+                if "." in self.s_list[self.parsed_s]:
+                    x = self.s_list[self.parsed_s]
+                    self.parsed_s += 1
+                    return float(x)
+                else:
+                    return TCL_ERROR
+            except ValueError:
+                return TCL_ERROR
 
     def stringMatch(self, s: str):
         if self.parsed_s >= len(self.s_list):
@@ -271,8 +281,6 @@ class ParseRec:
     def readblock(self, buf):
         pass
 
-    def filedone(self):
-        pass
 
 
 def register_example(E: Example, S: ExampleSet):
@@ -444,30 +452,26 @@ def compile_example_set(S: ExampleSet):
 def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     empty = True
     lst = []
-    # bzero((void *) eventActive, num)
-    # skipBlank(R)
-    event_list = R.s.split(" ")
-    lst = [0, 0]
-    i = 0
-    while i < len(event_list) and (event_list[i].isdigit() or event_list[i] == "*"):
+    lst= [0, 0]
+    while R.s_list[R.parsed_s].isdigit() or R.s_list[R.parsed_s] == "*":
         empty = False
-        if event_list[i] == "*":
-            i += 1
+        if R.stringMatch("*"):
             for i in range(num):
                 eventActive[i] = True
         else:
-            if event_list[i].isdigit():  # ! C functions
-                i += 1
-                lst[0] = event_list[i]
-                # return R.parseError("error reading event list")
+            x = R.readInt()
+            if x is False:
+                return R.parseError("error reading event list")
+            else:
+                lst[0] = x
             if lst[0] < 0 or lst[0] >= num:
                 return R.parseError("event" + str(lst[-1]) + " out of range")
-            if i < len(event_list) and event_list[i] == "-":
-                i += 1
-                if i < len(event_list) and event_list[i].isdigit():
-                    i += 1
-                    lst[1] = event_list[i]
-                    # return R.parseError("error reading event range")
+            if R.stringMatch("-"):
+                x = R.readInt()
+                if x is False:
+                    return R.parseError("error reading event range")
+                else:
+                    lst[1] = x
                 if lst[-1] <= lst[-2] or lst[-1] >= num:
                     return R.parseError("event" + str(lst[-1]) + " out of range")
             else:
@@ -475,11 +479,10 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
             while lst[-2] <= lst[-1]:
                 eventActive[lst[-2]] = True
                 lst[-2] += 1
-        # skipBlank(R)
     if empty:
         for v in range(num):
             eventActive[v] = True
-    return True
+    return TCL_OK
 
 
 def tidy_up_range(L: Range, unit: List[int], val: List[float], sparseMode: bool):
@@ -778,7 +781,6 @@ def read_example(E: Example, R: ParseRec):
 
             inputsSeen = targetsSeen = False
 
-
         elif R.stringPeek("I:") or R.stringPeek("i:") or R.stringPeek("T:") or \
                 R.stringPeek("t:") or R.stringPeek("B:") or R.stringPeek("b:"):
             sparseMode, doingInputs, doingTargets = False, False, False
@@ -864,7 +866,7 @@ def read_example(E: Example, R: ParseRec):
                     if eventActive[w]:
                         W = E.event[w]
                         if W.input:
-                            return R.parseError("multiple inputs given for event %d", w)
+                            return R.parseError("multiple inputs given for event "+ str(w))
 
                         W.input = I.input
                         W.sharedInputs = True
@@ -879,7 +881,7 @@ def read_example(E: Example, R: ParseRec):
                     if eventActive[w]:
                         W = E.event[w]
                         if W.target:
-                            return R.parseError("multiple targets given for event %d", w)
+                            return R.parseError("multiple targets given for event " + str(w))
 
                         W.target = T.target
                         W.sharedTargets = True
