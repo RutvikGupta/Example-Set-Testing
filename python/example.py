@@ -208,7 +208,7 @@ class ParseRec:
             return TCL_ERROR
         val = self.s_list.pop(self.parsed_s)
         self.parsed_s += 1
-        return val
+        return int(val)
 
     def stringMatch(self, s:str):
         if self.parsed_s >= len(self.s_list):
@@ -236,11 +236,20 @@ class ParseRec:
         regex = re.compile(r'[+-]?([0-9]*[.])?[0-9]+')
         return bool(regex.match(self.s_list[self.parsed_s]))
 
-    def readBlock(self):
-        #TODO
-        pass
-
-
+    def readReal(self):
+        v = 0.0
+        if self.parsed_s >= len(self.s_list):
+            return TCL_ERROR
+        shift = self.parsed_s
+        while shift < len(self.s_list) and (not self.s_list[shift] in ",;{}[]"):
+            shift += 1
+        if self.s_list[shift] == "-":
+            self.parsed_s = shift
+            return self.s_list[shift]
+        else:
+            x = self.s_list[self.parsed_s]
+            self.parsed_s += 1
+            return float(x)
 
 
 def initEvent(V: Event, E: Example):
@@ -521,8 +530,11 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
             L = Range(V, doingInputs, L)
             while not R.stringMatch("}"):
                 if R.isNumber():
-                    if R.readReal(L.value):
+                    x = R.readReal()
+                    if x is TCL_ERROR:
                         return parseError(R, "couldn't read sparse active value")
+                    else:
+                        L.value = x
                 else:
                     if R.readBlock(buf):
                         return parseError(R, Tcl_GetStringResult(Interp))
@@ -590,8 +602,11 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                 if L.numUnits >= maxvals:
                     maxvals *= 2
                     val = []
-                if readReal(R, val + L.numUnits)
+                x = R.readReal()
+                if x is TCL_ERROR:
                     return parseError(R, "couldn't read dense values")
+                else:
+                    val[L.numUnits] = x
                 L.numUnits += 1
         else:
             done = True
@@ -884,26 +899,29 @@ def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxE
         S = ExampleSet(setName)
         Root.registerExampleSet(S)
 
-    while not stringMatch(R, ";"):
-        if stringMatch(R, "proc:"):
-            if readBlock(R, buf):
+    while not R.stringMatch(";"):
+        if R.stringMatch("proc:"):
+            if R.readBlock(buf):
                 parseError(R, "error reading code segment")
                 return  
             # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
             # Tcl_IncrRefCount(S->proc);
             # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
             # return TCL_ERROR;
-        elif stringMatch(R, "max:"):
-            if readReal(R, & (S->maxTime)):
+        elif R.stringMatch("max:"):
+            x = R.readReal():
+            if x is False:
+
+            if R.readReal(R, & (S->maxTime)):
                 parseError(R, "missing value after \"max:\" in the set header")
                 return  (S, E)
 
-        elif stringMatch(R, "min:"):
+        elif R.stringMatch("min:"):
             if readReal(R, & (S->minTime)):
                 parseError(R, "missing value after \"min:\" in the set header")
                 return  (S, E)
 
-        elif (stringMatch(R, "grace:")):
+        elif R.stringMatch(R, "grace:"):
             if (readReal(R, & (S->graceTime))):
                 parseError(R, "missing value after \"grace:\" in the set header")
                 return  (S, E)
@@ -941,8 +959,8 @@ def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxE
     parseError(R, "")
     compileExampleSet(S)
     if (halted):
-        return result("readExampleSet: halted prematurely");
-    return TCL_OK;
+        return result("readExampleSet: halted prematurely")
+    return TCL_OK
 
 
 """/* A mode of 0 means do nothing if the set exists.
