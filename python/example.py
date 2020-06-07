@@ -991,7 +991,8 @@ def read_example(E: Example, R: ParseRec):
     """/* A mode of 0 means do nothing if the set exists.
        1 means override the set
        2 means add to the set
-       3 means use as a pipe */"""
+       3 means use as a pipe */
+    """
 
     def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
         R = Root()
