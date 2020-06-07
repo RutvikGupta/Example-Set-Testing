@@ -19,8 +19,8 @@ class ExampleSet:
     ext = None  #: ExSetExt
     # where is ExSetExt defined?? 
 
-    example = None  #: Example
-    permuted = None  #: Example
+    example = []  #: List[Example]
+    permuted = []  #: List[Example]
     currentExampleNum: int
     currentExample = None  #: Example
     firstExample = None  #: Example
@@ -466,24 +466,19 @@ def compile_example_set(S: ExampleSet):
     E = S.firstExample
     while E:
         S.numEvents += E.numEvents
-
         E = E.next
         S.numExamples += 1
 
     # Build the example and permuted arrays */
-
     if S.numExamples:
-        # allocate memory for S.example
-        # allocate memory for S.permuted
-        pass
-
+        S.example = []
+        S.permuted = []
     # Fill the arrays and call the user-defined init procedures on each example and event
 
     i = 0
     E = S.firstExample
     while E:
-        # original line: S->example[i] = S->permuted[i] = E;
-        S.example[i], S.permuted = E, E
+        S.example[i], S.permuted[i] = E, E
         E.num = i
         totalFreq += E.frequency
         E = E.next
@@ -984,8 +979,8 @@ def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxE
     R.buf = None
     R.s = None
     R.line = 0
-    if startParser(R, HTONL(val)):
-        return R.parseError("couldn't read the header")
+    # if startParser(R, HTONL(val)):
+    #     return R.parseError("couldn't read the header")
     R.readInt()
     R.readInt()
     if not S:
@@ -1086,35 +1081,3 @@ def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
             # deleteExampleSet(S);
             return TCL_ERROR
     return  # result(setName)
-
-
-"""/ *This puts all the examples in arrays and does some other calculations * /"""
-
-
-def compileExampleSet(S: ExampleSet):
-    E = Example(S)
-    i, v = 0, 0
-    totalFreq = 0.0
-    scale, sum = 0.0, 0.0
-    # struct Tcl_CmdInfo junk;
-    # / *Count the number of examples and events * /
-    S.numExamples = 0
-    S.numEvents = 0
-    E = S.firstExample
-    while E:
-        S.numEvents += E.numEvents
-        E = E.next
-        S.numExamples += 1
-
-    # / * Build the example and permuted arrays * /
-    S.example = []
-    S.permuted = []
-    # / * Fill the arrays and call the user-defined init procedures on each example and event * /
-    i = 0
-    E = S.firstExample
-    while E:
-        S.example[i], S.permuted[i] = E, E
-        E.num = i
-        totalFreq += E.frequency
-        E = E.next
-        i += 1
