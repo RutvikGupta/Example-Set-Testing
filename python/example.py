@@ -251,6 +251,14 @@ class ParseRec:
             self.parsed_s += 1
             return float(x)
 
+    def stringPeek(self, s: str):
+        if self.parsed_s >= len(self.s_list):
+            return TCL_ERROR
+        if self.s_list[self.parsed_s] == s:
+            return TCL_OK
+        else:
+            return TCL_ERROR
+
 
 def initEvent(V: Event, E: Example):
     S = E.set
