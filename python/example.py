@@ -210,6 +210,21 @@ class ParseRec:
         self.parsed_s += 1
         return int(val)
 
+    def readReal(self):
+        v = 0.0
+        if self.parsed_s >= len(self.s_list):
+            return TCL_ERROR
+        shift = self.parsed_s
+        while shift < len(self.s_list) and (not self.s_list[shift] in ",;{}[]"):
+            shift += 1
+        if self.s_list[shift] == "-":
+            self.parsed_s = shift
+            return self.s_list[shift]
+        else:
+            x = self.s_list[self.parsed_s]
+            self.parsed_s += 1
+            return float(x)
+
     def stringMatch(self, s:str):
         if self.parsed_s >= len(self.s_list):
             return TCL_ERROR
@@ -236,21 +251,6 @@ class ParseRec:
         regex = re.compile(r'[+-]?([0-9]*[.])?[0-9]+')
         return bool(regex.match(self.s_list[self.parsed_s]))
 
-    def readReal(self):
-        v = 0.0
-        if self.parsed_s >= len(self.s_list):
-            return TCL_ERROR
-        shift = self.parsed_s
-        while shift < len(self.s_list) and (not self.s_list[shift] in ",;{}[]"):
-            shift += 1
-        if self.s_list[shift] == "-":
-            self.parsed_s = shift
-            return self.s_list[shift]
-        else:
-            x = self.s_list[self.parsed_s]
-            self.parsed_s += 1
-            return float(x)
-
     def stringPeek(self, s: str):
         if self.parsed_s >= len(self.s_list):
             return TCL_ERROR
@@ -258,6 +258,16 @@ class ParseRec:
             return TCL_OK
         else:
             return TCL_ERROR
+
+    def fileDone(self):
+        pass
+        # TODO
+
+    def readblock(self, buf):
+        pass
+
+    def filedone(self):
+        pass
 
 
 def initEvent(V: Event, E: Example):
@@ -283,6 +293,10 @@ def register_example(E: Example, S: ExampleSet):
         S.lastExample = E
     S.numExamples += 1
     E.set = S
+
+
+class Tcl_DecrRefCount(object):
+    pass
 
 
 def clean_example(E: Example):
@@ -451,7 +465,7 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     empty = True
     lst = []
     # bzero((void *) eventActive, num)
-    # skipBlank(R)
+    # R.skipBlank()
     event_list = R.s.split(" ")
     lst = [0, 0]
     i = 0
@@ -481,7 +495,7 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
             while lst[-2] <= lst[-1]:
                 eventActive[lst[-2]] = True
                 lst[-2] += 1
-        # skipBlank(R)
+        # R.skipBlank()
     if empty:
         for v in range(num):
             eventActive[v] = True
@@ -565,7 +579,7 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                     else:
                         return parseError(R, "couldn't read dense first unit")
                 else:
-                    if readBlock(R, buf):
+                    if R.readblock(buf):
                         return parseError(R, Tcl_GetStringResult(Interp))
 
                     if buf.s[0]:
@@ -633,7 +647,7 @@ def read_example(E: Example, R: ParseRec):
     v, w, nextInputEvent, nextTargetEvent = 0, 0, 0, 0
 
     # read the example header
-    if fileDone(R):
+    if R.filedone():
         return parseError(R, "file ended prematurely at start of an example")
     E.numEvents = 1
 
@@ -642,25 +656,27 @@ def read_example(E: Example, R: ParseRec):
 
         buf = R.buf
 
-        if stringMatch(R, "name:"):
-            if readBlock(R, buf):
+        if R.stringMatch("name:"):
+            if R.readblock(buf):
                 return parseError(R, "error reading example name")
-            E.name = copyString(buf.s)
+            
+            #copyString is just to take 
+            E.name = buf.s
             done = False
-        if stringMatch(R, "freq:"):
-            if readReal(R, E.frequency):
+        if R.stringMatch("freq:"):
+            if R.readReal(E.frequency):
                 return parseError(R, "error reading example frequency")
             done = False
-        if stringMatch(R, "proc:"):
-            if readBlock(R, buf):
+        if R.stringMatch("proc:"):
+            if R.readblock(buf):
                 return parseError(R, "error reading example proc")
             E.proc = Tcl_NewStringObj(buf.s, strlen(buf.s))
             Tcl_IncrRefCount(E.proc)
             done = False
 
-        skipBlank(R)
+        R.skipBlank()
         if R.s[0].isdigit():
-            if readInt(R, E.numEvents):
+            if R.readInt(E.numEvents):
                 return parseError(R, "error reading num-events")
             if E.numEvents <= 0:
                 return parseError(R, "num-events (%d) must be positive", E.numEvents)
@@ -676,14 +692,14 @@ def read_example(E: Example, R: ParseRec):
     nextInputEvent, nextTargetEvent = 0, 0
     inputsSeen = targetsSeen = True
 
-    while not stringMatch(R, ";"):
-        if stringMatch(R, "[")
+    while not R.stringMatch(";"):
+        if R.stringMatch("["):
             # get the list of events
             if parseEventList(R, eventActive, E.numEvents):
                  
                  
             # This makes V the first active event, and v its index
-            v, V = 0, None
+                v, V = 0, None
             while v < E.numEvents and not V:
                 if eventActive[v]:
                     V = E.event + v
@@ -694,9 +710,9 @@ def read_example(E: Example, R: ParseRec):
                  
 
             # parse the event headers
-            while not stringMatch(R. "]"):
-                if stringMatch(R, "proc:"):
-                    if readBlock(R, buf):
+            while not R.stringMatch("]"):
+                if R.stringMatch("proc:"):
+                    if R.readblock(buf):
                         return parseError(R, "error reading example proc")
                     w = v
                     while w < E.numEvents:
@@ -705,56 +721,56 @@ def read_example(E: Example, R: ParseRec):
                             W.proc = Tcl_NewStringObj(buf.s, len(buf.s))
                             Tcl_IncrRefCount(W.proc)
                             w += 1
-                elif stringMatch(R, "max:"):
-                    if readReal(R, V.maxTime):
+                elif R.stringMatch("max:"):
+                    if R.readReal(V.maxTime):
                         parseError(R, "missing value after \"max:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
                         if eventActive[w]:
                             E.event[w].maxTime = V.maxTime
-                elif stringMatch(R, "min:"):
-                    if readReal(R, V.minTime):
+                elif R.stringMatch("min:"):
+                    if R.readReal(V.minTime):
                         parseError(R, "missing value after \"min:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
                         if eventActive[w]:
                             E.event[w].minTime = V.minTime
-                elif stringMatch(R, "grace:"):
-                    if readReal(r, V.graceTime):
+                elif R.stringMatch("grace:"):
+                    if R.readReal(V.graceTime):
                         parseError(R, "missing value after \"grace:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
                         if eventActive[w]:
                             E.event[w].graceTime = V.graceTime
-                elif stringMatch(R, "defI:"):
-                    if readReal(r, V.defaultInput):
+                elif R.stringMatch("defI:"):
+                    if R.readReal(V.defaultInput):
                         parseError(R, "missing value after \"defI:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
                         if eventActive[w]:
                             E.event[w].defaultInput = V.defaultInput
-                elif stringMatch(R, "actI:"):
-                    if readReal(r, V.activeInput):
+                elif R.stringMatch("actI:"):
+                    if R.readReal(V.activeInput):
                         parseError(R, "missing value after \"actI:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
                         if eventActive[w]:
                             E.event[w].activeInput = V.activeInput
-                elif stringMatch(R, "defT:"):
-                    if readReal(r, V.defaultTarget):
+                elif R.stringMatch("defT:"):
+                    if R.readReal(V.defaultTarget):
                         parseError(R, "missing value after \"defT:\" in event header")
                          
                          
                     for w in range(v + 1, E.numEvents):
                         if eventActive[w]:
                             E.event[w].defaultTarget = V.defaultTarget
-                elif stringMatch(R, "actT:"):
-                    if readReal(r, V.activeTarget):
+                elif R.stringMatch("actT:"):
+                    if R.readReal(V.activeTarget):
                         parseError(R, "missing value after \"actT:\" in event header")
                          
                          
@@ -765,8 +781,8 @@ def read_example(E: Example, R: ParseRec):
                     parseError(R, "something unexpected (%s) in event header", R.s)
                      
                      
-        elif stringPeek(R, "I:") or stringPeek(R, "i:") or stringPeek(R, "T:") or \
-                stringPeek(R, "t:") or stringPeek(R "B:") or stringPeek(R, "b:"):
+        elif R.stringPeek("I:") or R.stringPeek("i:") or R.stringPeek("T:") or \
+                R.stringPeek("t:") or R.stringPeek("B:") or R.stringPeek("b:"):
             sparseMode, doingInputs, doingTargets = False, False, False
             I, T = None
 
@@ -920,43 +936,43 @@ def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxE
             x = R.readReal():
             if x is False:
 
-            if R.readReal(R, & (S->maxTime)):
+            if R.readReal(& (S->maxTime)):
                 parseError(R, "missing value after \"max:\" in the set header")
                 return  (S, E)
 
         elif R.stringMatch("min:"):
-            if readReal(R, & (S->minTime)):
+            if R.readReal(& (S->minTime)):
                 parseError(R, "missing value after \"min:\" in the set header")
                 return  (S, E)
 
-        elif R.stringMatch(R, "grace:"):
-            if (readReal(R, & (S->graceTime))):
+        elif R.stringMatch("grace:"):
+            if (R.readReal(& (S->graceTime))):
                 parseError(R, "missing value after \"grace:\" in the set header")
                 return  (S, E)
 
-        elif (stringMatch(R, "defI:")):
-            if (readReal(R, & (S->defaultInput))):
+        elif (R.stringMatch("defI:")):
+            if (R.readReal(& (S->defaultInput))):
                 parseError(R, "missing value after \"defI:\" in the set header")
                 return  (S, E)
 
-        elif (stringMatch(R, "actI:")):
-            if (readReal(R, & (S->activeInput))):
+        elif (R.stringMatch("actI:")):
+            if (R.readReal(& (S->activeInput))):
                 parseError(R, "missing value after \"actI:\" in the set header")
                 return  (S, E)
 
-        elif (stringMatch(R, "defT:")):
-            if (readReal(R, & (S->defaultTarget))):
+        elif (R.stringMatch("defT:")):
+            if (R.readReal(& (S->defaultTarget))):
                 parseError(R, "missing value after \"defT:\" in the set header")
                 return  (S, E)
 
-        elif (stringMatch(R, "actT:")):
-            if (readReal(R, & (S->activeTarget))):
+        elif (R.stringMatch("actT:")):
+            if (R.readReal(& (S->activeTarget))):
                 parseError(R, "missing value after \"actT:\" in the set header")
                 return  (S, E)
         else:
             break
     halted = False
-    while (not fileDone(R)) and (not halted) and (not maxExamples or examplesRead < maxExamples):
+    while (not R.fileDone()) and (not halted) and (not maxExamples or examplesRead < maxExamples):
         E = Example(S)
         if (readExample(E, R)):
             return  (S, E)
