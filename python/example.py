@@ -242,7 +242,7 @@ class ParseRec:
             if len(lst) == 1:
                 self.parsed_s += 1
                 return TCL_OK
-            elif lst[i+1] in "});":
+            elif lst[i + 1] in "});":
                 self.parsed_s += 1
                 return TCL_OK
             else:
@@ -293,10 +293,6 @@ def register_example(E: Example, S: ExampleSet):
         S.lastExample = E
     S.numExamples += 1
     E.set = S
-
-
-class Tcl_DecrRefCount(object):
-    pass
 
 
 def clean_example(E: Example):
@@ -465,7 +461,7 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
     empty = True
     lst = []
     # bzero((void *) eventActive, num)
-    # R.skipBlank()
+    # skipBlank(R)
     event_list = R.s.split(" ")
     lst = [0, 0]
     i = 0
@@ -495,7 +491,7 @@ def parseEventList(R: ParseRec, eventActive: List[bool], num: int) -> bool:
             while lst[-2] <= lst[-1]:
                 eventActive[lst[-2]] = True
                 lst[-2] += 1
-        # R.skipBlank()
+        # skipBlank(R)
     if empty:
         for v in range(num):
             eventActive[v] = True
@@ -579,7 +575,7 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
                     else:
                         return parseError(R, "couldn't read dense first unit")
                 else:
-                    if R.readblock(buf):
+                    if readBlock(R, buf):
                         return parseError(R, Tcl_GetStringResult(Interp))
 
                     if buf.s[0]:
@@ -647,7 +643,7 @@ def read_example(E: Example, R: ParseRec):
     v, w, nextInputEvent, nextTargetEvent = 0, 0, 0, 0
 
     # read the example header
-    if R.filedone():
+    if fileDone(R):
         return parseError(R, "file ended prematurely at start of an example")
     E.numEvents = 1
 
@@ -659,8 +655,8 @@ def read_example(E: Example, R: ParseRec):
         if R.stringMatch("name:"):
             if R.readblock(buf):
                 return parseError(R, "error reading example name")
-            
-            #copyString is just to take 
+
+            #copyString is just to take
             E.name = buf.s
             done = False
         if R.stringMatch("freq:"):
@@ -861,178 +857,182 @@ def read_example(E: Example, R: ParseRec):
                 if T.target:
                     parseError(R, "multiple targets specified for event %d", \
                                (targetsSeen) ? nextTargetEvent - 1: v)
-                     
-                     
-                T.target = I.input
-                T.sharedTargets = True
-            if doingInputs and not inputsSeen:
-                for w in range(v + 1, E.numEvents):
-                    if eventActive[w]:
-                        W = E.event + w
-                        if W.input:
-                            parseError(R, "multiple inputs given for event %d", w)
-                             
-                             
-                        W.input = I.input
-                        W.sharedInputs = True
-
-                for w in range(nextInputEvent, E.numEvents):
-                    if eventActive[w]:
-                        nextInputEvent = w + 1
-                    inputsSeen = True
-            if doingTargets and not targetsSeen:
-                for w in range(v + 1, E.numEvents):
-                    if eventActive[w]:
-                        W = E.event + w
-                        if W.target:
-                            parseError(R, "multiple targets given for event %d", w)
-                             
-                             
-                        W.target = T.target
-                        W.sharedTargets = True
-                for w in range(nextTargetEvent, E.numEvents):
-                    if eventActive[w]:
-                        nextTargetEvent = w + 1
-                    targetsSeen = True
-
-    # TODO: ifdef JUNK block
 
 
-def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxExamples: int):
-    S = Sp
-    E = Example(Sp)
-    val, examplesRead = 0, 0
-    halted = False
-    R = ParseRec()
-    R.fileName = fileName
-    R.buf = None
-    R.s = None
-    R.line = 0
-    R.channel = readChannel(fileName)
-    if not R.channel:
-        return "readExampleSet: couldn't open the file " + fileName
-    R.fileName = fileName
-    R.buf = None
-    R.s = None
-    R.line = 0
-    if startParser(R, HTONL(val)):
-        return parseError(R, "couldn't read the header")
-    R.readInt(val)
-    R.readInt(val)
-    if not S:
-        S = ExampleSet(setName)
-        Root.registerExampleSet(S)
+                    T.target = I.input
+                    T.sharedTargets = True
+                if doingInputs and not inputsSeen:
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            W = E.event + w
+                            if W.input:
+                                parseError(R, "multiple inputs given for event %d", w)
 
-    while not R.stringMatch(";"):
-        if R.stringMatch("proc:"):
-            if R.readBlock(buf):
-                parseError(R, "error reading code segment")
-                return  
-            # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
-            # Tcl_IncrRefCount(S->proc);
-            # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
-            # return TCL_ERROR;
-        elif R.stringMatch("max:"):
-            x = R.readReal():
-            if x is False:
+                            W.input = I.input
+                            W.sharedInputs = True
 
-            if R.readReal(& (S->maxTime)):
-                parseError(R, "missing value after \"max:\" in the set header")
-                return  (S, E)
+                    for w in range(nextInputEvent, E.numEvents):
+                        if eventActive[w]:
+                            nextInputEvent = w + 1
+                        inputsSeen = True
+                if doingTargets and not targetsSeen:
+                    for w in range(v + 1, E.numEvents):
+                        if eventActive[w]:
+                            W = E.event + w
+                            if W.target:
+                                parseError(R, "multiple targets given for event %d", w)
 
-        elif R.stringMatch("min:"):
-            if R.readReal(& (S->minTime)):
-                parseError(R, "missing value after \"min:\" in the set header")
-                return  (S, E)
+                            W.target = T.target
+                            W.sharedTargets = True
+                    for w in range(nextTargetEvent, E.numEvents):
+                        if eventActive[w]:
+                            nextTargetEvent = w + 1
+                        targetsSeen = True
 
-        elif R.stringMatch("grace:"):
-            if (R.readReal(& (S->graceTime))):
-                parseError(R, "missing value after \"grace:\" in the set header")
-                return  (S, E)
+        # TODO: ifdef JUNK block
 
-        elif (R.stringMatch("defI:")):
-            if (R.readReal(& (S->defaultInput))):
-                parseError(R, "missing value after \"defI:\" in the set header")
-                return  (S, E)
+    def readExampleSet(setName: str, fileName: str, Sp: ExampleSet, pipe: bool, maxExamples: int):
+        S = Sp
+        E = Example(Sp)
+        val, examplesRead = 0, 0
+        halted = False
+        R = ParseRec()
+        R.fileName = fileName
+        R.buf = None
+        R.s = None
+        R.line = 0
+        R.channel = readChannel(fileName)
+        if not R.channel:
+            return "readExampleSet: couldn't open the file " + fileName
+        R.fileName = fileName
+        R.buf = None
+        R.s = None
+        R.line = 0
+        if startParser(R, HTONL(val)):
+            return parseError(R, "couldn't read the header")
+        R.readInt()
+        R.readInt()
+        if not S:
+            S = ExampleSet(setName)
+            Root.registerExampleSet(S)
 
-        elif (R.stringMatch("actI:")):
-            if (R.readReal(& (S->activeInput))):
-                parseError(R, "missing value after \"actI:\" in the set header")
-                return  (S, E)
+        while not R.stringMatch(";"):
+            if R.stringMatch("proc:"):
+                if R.readBlock(buf):
+                    parseError(R, "error reading code segment")
+                    return
+                    # S->proc = Tcl_NewStringObj(buf->s, strlen(buf->s));
+                # Tcl_IncrRefCount(S->proc);
+                # if (Tcl_EvalObjEx(Interp, S->proc, TCL_EVAL_GLOBAL) != TCL_OK)
+                # return TCL_ERROR;
+            elif R.stringMatch("max:"):
+                x = R.readReal()
+                if x is False:
+                    return parseError(R, "missing value after \"max:\" in the set header")
+                else:
+                    S.maxTime = x
 
-        elif (R.stringMatch("defT:")):
-            if (R.readReal(& (S->defaultTarget))):
-                parseError(R, "missing value after \"defT:\" in the set header")
-                return  (S, E)
+            elif R.stringMatch("min:"):
+                x = R.readReal()
+                if x is False:
+                    return parseError(R, "missing value after \"min:\" in the set header")
+                else:
+                    S.minTime = x
 
-        elif (R.stringMatch("actT:")):
-            if (R.readReal(& (S->activeTarget))):
-                parseError(R, "missing value after \"actT:\" in the set header")
-                return  (S, E)
-        else:
-            break
-    halted = False
-    while (not R.fileDone()) and (not halted) and (not maxExamples or examplesRead < maxExamples):
-        E = Example(S)
-        if (readExample(E, R)):
-            return  (S, E)
-        registerExample(E, S)
+            elif R.stringMatch("grace:"):
+                x = R.readReal()
+                if x is False:
+                    return parseError(R, "missing value after \"grace:\" in the set header")
+                else:
+                    S.graceTime = x
 
-        halted = smartUpdate(FALSE)
-    """/ *This is called to clean up the parser * /"""
-    parseError(R, "")
-    compileExampleSet(S)
-    if (halted):
-        return result("readExampleSet: halted prematurely")
-    return TCL_OK
+            elif R.stringMatch("defI:"):
+                x = R.readReal()
+                if x is False:
+                    return parseError(R, "missing value after \"defI:\" in the set header")
+                else:
+                    S.defaultInput = x
 
+            elif R.stringMatch("actI:"):
+                x = R.readReal()
+                if x is False:
+                    return parseError(R, "missing value after \"actI:\" in the set header")
+                else:
+                    S.activeInput = x
 
-"""/* A mode of 0 means do nothing if the set exists.
-   1 means override the set
-   2 means add to the set
-   3 means use as a pipe */"""
+            elif R.stringMatch("defT:"):
+                x = R.readReal()
+                if x is False:
+                    return parseError(R, "missing value after \"defT:\" in the set header")
+                else:
+                    S.defaultTarget = x
 
+            elif R.stringMatch("actT:"):
+                x = R.readReal()
+                if x is False:
+                    return parseError(R, "missing value after \"actT:\" in the set header")
+                else:
+                    S.activeTarget = x
+            else:
+                break
+        halted = False
+        while (not fileDone(R)) and (not halted) and (not maxExamples or examplesRead < maxExamples):
+            E = Example(S)
+            if read_example(E, R):
+                return (S, E)
+            register_example(E, S)
 
-def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
-    R = Root()
-    S = R.lookupExampleSet(setName)
-    if S and mode == 1:
-        # deleteExampleSet(S);
-        S = None
-    if not S or mode != 0:
-        if readExampleSet(setName, fileName, S, mode, numExamples):
+            halted = smartUpdate(False)
+        """/ *This is called to clean up the parser * /"""
+        parseError(R, "")
+        compileExampleSet(S)
+        if (halted):
+            return result("readExampleSet: halted prematurely")
+        return TCL_OK
+
+    """/* A mode of 0 means do nothing if the set exists.
+       1 means override the set
+       2 means add to the set
+       3 means use as a pipe */"""
+
+    def loadExamples(setName: str, fileName: str, mode: int, numExamples: int):
+        R = Root()
+        S = R.lookupExampleSet(setName)
+        if S and mode == 1:
             # deleteExampleSet(S);
-            return TCL_ERROR
-    return  # result(setName)
+            S = None
+        if not S or mode != 0:
+            if readExampleSet(setName, fileName, S, mode, numExamples):
+                # deleteExampleSet(S);
+                return TCL_ERROR
+        return  # result(setName)
 
+    """/ *This puts all the examples in arrays and does some other calculations * /"""
 
-"""/ *This puts all the examples in arrays and does some other calculations * /"""
+    def compileExampleSet(S: ExampleSet):
+        E = Example(S)
+        i, v = 0, 0
+        totalFreq = 0.0
+        scale, sum = 0.0, 0.0
+        # struct Tcl_CmdInfo junk;
+        # / *Count the number of examples and events * /
+        S.numExamples = 0
+        S.numEvents = 0
+        E = S.firstExample
+        while E:
+            S.numEvents += E.numEvents
+            E = E.next
+            S.numExamples += 1
 
-
-def compileExampleSet(S: ExampleSet):
-    E = Example(S)
-    i, v = 0, 0
-    totalFreq = 0.0
-    scale, sum = 0.0, 0.0
-    # struct Tcl_CmdInfo junk;
-    # / *Count the number of examples and events * /
-    S.numExamples = 0
-    S.numEvents = 0
-    E = S.firstExample
-    while E:
-        S.numEvents += E.numEvents
-        E = E.next
-        S.numExamples += 1
-
-    # / * Build the example and permuted arrays * /
-    S.example = []
-    S.permuted = []
-    # / * Fill the arrays and call the user-defined init procedures on each example and event * /
-    i = 0
-    E = S.firstExample
-    while E:
-        S.example[i], S.permuted[i] = E, E
-        E.num = i
-        totalFreq += E.frequency
-        E = E.next
-        i += 1
+        # / * Build the example and permuted arrays * /
+        S.example = []
+        S.permuted = []
+        # / * Fill the arrays and call the user-defined init procedures on each example and event * /
+        i = 0
+        E = S.firstExample
+        while E:
+            S.example[i], S.permuted[i] = E, E
+            E.num = i
+            totalFreq += E.frequency
+            E = E.next
+            i += 1
