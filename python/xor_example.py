@@ -58,7 +58,6 @@ class ExampleSet:
         self.example = []
 
 
-
 class Example:
     """ example
     """
@@ -177,7 +176,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
     E = Example(S)
 
     # add to list of examples
-    S.example.append(E)
+    register_example(E, S)
 
     example_list.pop()
     header_string = example_list[0]
@@ -189,6 +188,19 @@ def read_example(S: ExampleSet, example_list: List[str]):
         E.event.append(new_event)
     for i in range(E.numEvents):
         parse_event_list(E.event[i], example_list[i + 1])
+
+
+def register_example(E: Example, S: ExampleSet):
+    E.next = None
+    if not S.firstExample:
+        S.firstExample = E
+        S.lastExample = E
+    else:
+        S.lastExample.next = E
+        S.lastExample = E
+    S.numExamples += 1
+    S.example.append(E)
+    E.set = S
 
 
 def read_in_xor_file(S: ExampleSet, name: str):
