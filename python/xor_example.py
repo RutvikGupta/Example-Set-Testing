@@ -8,7 +8,8 @@ TCL_OK = True
 
 
 class ExampleSet:
-    """ set of examples linked list
+    """ ExampleSet Object. Stores a set of examples with similar properties on which the neural network will be
+        trained on.
     """
     name: str
     num: int
@@ -60,7 +61,8 @@ class ExampleSet:
 
 
 class Example:
-    """ example
+    """ Example class. The object which stores information related to one example of the ExampleSet and has a list of
+        event which will be executed by the neural network
     """
 
     name = None  #: str
@@ -88,7 +90,8 @@ class Example:
 
 
 class Event:
-    """ event!
+    """ Event class. Consist of information related to one event of the Example object and has Range object as inputs
+        and targets
     """
 
     input = None  #: Range
@@ -122,7 +125,8 @@ class Event:
 
 
 class Range:
-    """range"""
+    """Range class. It stores information related to the inputs and targets of event of event class.
+       It can be target OR input based on the variable doing_inputs"""
 
     groupName: str  # If null, unit offsets are for the net
     numUnits: int
@@ -132,10 +136,11 @@ class Range:
 
     value: float  # Only used for sparse encodings
     unit: int  # Only used for sparse encodings
-    next = None # Range
+    next = None  # Range
 
     def __init__(self, V: Event, doing_inputs: bool, L=None):
-        if doing_inputs:
+
+        if doing_inputs:  # if the Range is an input
             self.value = V.activeInput
         else:
             self.value = V.activeTarget
@@ -209,10 +214,11 @@ def read_in_xor_file(S: ExampleSet, name: str):
     xor_example_list = f.read().split(";")
     read_example(S, xor_example_list)
 
+
 def print_out_example_set(ES: ExampleSet):
     """
     prints out some variables to visualize
-    :param S:
+    :param ES:
     :return:
     """
     S = deepcopy(ES)
@@ -222,27 +228,21 @@ def print_out_example_set(ES: ExampleSet):
         s += "located in ExampleSet " + S.name + "\n"
         example = S.example[example_num]
         for event_num in range(len(example.event)):
-            s+= "    " + "event at list index " + str(example_num) + ' : \n'
+            s += "    " + "event at list index " + str(example_num) + ' : \n'
             event = example.event[event_num]
-            s+= "    "*2 + "input Range: " + str(event.input) + '\n'
+            s += "    " * 2 + "input Range: " + str(event.input) + '\n'
             list_of_vals = ""
             while event.input.next is not None:
                 list_of_vals += str(event.input.val) + ", "
                 event.input = event.input.next
 
-            s+= "    "*3 + "val: " + list_of_vals + '\n'
-            s+= "    "*2 + "target Range: " + str(event.target) + '\n'
-            s+= "    "*3 + "val: " + str(event.target.val) + '\n'
+            s += "    " * 3 + "val: " + list_of_vals + '\n'
+            s += "    " * 2 + "target Range: " + str(event.target) + '\n'
+            s += "    " * 3 + "val: " + str(event.target.val) + '\n'
     print(s)
-
 
 
 if __name__ == "__main__":
     S = ExampleSet("Logic")
     read_in_xor_file(S, "scratch.txt")
     print_out_example_set(S)
-
-
-    
-
-
