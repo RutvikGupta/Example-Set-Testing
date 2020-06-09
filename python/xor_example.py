@@ -149,6 +149,7 @@ class Range:
 
 
 def parse_event_list(event: Event, event_list: str):
+    """parse through the list of items and populates Event object"""
     inp_tar_lst = re.split("[A-Z]:", event_list)
     inp_tar_lst.pop(0)
     event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
@@ -174,6 +175,9 @@ def parse_event_list(event: Event, event_list: str):
 
 
 def read_example(S: ExampleSet, example_list: List[str]):
+    """reads the example_list string from the example file,
+    creates the example and adds it to ExampleSet"""
+
     E = Example(S)
 
     # add to list of examples
@@ -192,6 +196,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
 
 
 def register_example(E: Example, S: ExampleSet):
+    """keep track of examples by updating first, last examples"""
     E.next = None
     if not S.firstExample:
         S.firstExample = E
@@ -205,6 +210,10 @@ def register_example(E: Example, S: ExampleSet):
 
 
 def read_in_xor_file(S: ExampleSet, name: str):
+
+    """ the ExampleSet contains Examples, which contain Events, which contain
+    input and target, both of which are Range objects.
+    """
     f = open(name, "r")
     xor_example_list = f.read().split(";")
     read_example(S, xor_example_list)
