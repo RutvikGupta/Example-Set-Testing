@@ -132,6 +132,7 @@ class Range:
 
     value: float  # Only used for sparse encodings
     unit: int  # Only used for sparse encodings
+    next = None # Range
 
     def __init__(self, V: Event, doing_inputs: bool, L=None):
         if doing_inputs:
