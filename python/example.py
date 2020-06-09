@@ -685,9 +685,10 @@ def readEventRanges(V: Event, S: ExampleSet, R: ParseRec,
     return TCL_OK
 
 
+
+
 """/* This parses a text example */
 """
-
 
 def read_example(E: Example, R: ParseRec):
     eventActive = []

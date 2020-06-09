@@ -18,7 +18,7 @@ class ExampleSet:
     ext = None  #: ExSetExt
     # where is ExSetExt defined??
 
-    example = []  #: List[Example]
+    example = []  #: List[Example]  list of examples
     permuted = []  #: List[Example]
     currentExampleNum: int
     currentExample = None  #: Example
@@ -55,6 +55,8 @@ class ExampleSet:
         self.maxGroupNames = 0
         self.groupName = []
         self.numExamples = 0
+        self.example = []
+
 
 
 class Example:
@@ -172,6 +174,10 @@ def parse_event_list(event: Event, event_list: str):
 
 def read_example(S: ExampleSet, example_list: List[str]):
     E = Example(S)
+
+    # add to list of examples
+    S.example.append(E)
+
     example_list.pop()
     header_string = example_list[0]
 
@@ -193,6 +199,10 @@ def read_in_xor_file(S: ExampleSet, name: str):
 if __name__ == "__main__":
     S = ExampleSet("Logic")
     read_in_xor_file(S, "scratch.txt")
+
+    print("S.example:")
+    print(S.example)
+
     
 
 
