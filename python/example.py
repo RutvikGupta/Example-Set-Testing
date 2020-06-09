@@ -123,6 +123,7 @@ class Example:
     def __init__(self, S: ExampleSet):
         self.frequency = example_defaults.DEF_E_frequency
         self.set = S
+        S.numExamples += 1
 
         # initExampleExtension(E)
 

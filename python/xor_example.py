@@ -1,10 +1,9 @@
 from typing import List
 from python import example_defaults
-import re, math
+import re
 
 TCL_ERROR = False
 TCL_OK = True
-
 
 
 class ExampleSet:
@@ -55,6 +54,7 @@ class ExampleSet:
         self.numGroupNames = 0
         self.maxGroupNames = 0
         self.groupName = []
+        self.numExamples = 0
 
 
 class Example:
@@ -80,6 +80,7 @@ class Example:
     def __init__(self, S: ExampleSet):
         self.frequency = example_defaults.DEF_E_frequency
         self.set = S
+        S.numExamples += 1
 
         # initExampleExtension(E)
 
@@ -142,3 +143,56 @@ class Range:
                 V.input = self
             else:
                 V.target = self
+
+
+def parse_event_list(event: Event, event_list: str):
+    inp_tar_lst = re.split("[A-Z]:", event_list)
+    inp_tar_lst.pop(0)
+    event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
+    for i in range(len(event_dict["I"])):
+        if i == 0:
+            R = Range(event, True)
+
+        else:
+            R = Range(event, True, event.input)
+        R.val = int(event_dict["I"][i])
+        R.firstUnit = R.val
+        R.numUnits = len(event_dict["I"])
+
+    for i in range(len(event_dict["T"])):
+        if i == 0:
+            R = Range(event, False)
+
+        else:
+            R = Range(event, False, event.input)
+        R.val = int(event_dict["T"][i])
+        R.firstUnit = R.val
+        R.numUnits = len(event_dict["T"])
+
+
+def read_example(S: ExampleSet, example_list: List[str]):
+    E = Example(S)
+    example_list.pop()
+    header_string = example_list[0]
+
+    E.numEvents = len(example_list) - 1
+    E.event = []
+    for _ in range(E.numEvents):
+        new_event = Event(E)
+        E.event.append(new_event)
+    for i in range(E.numEvents):
+        parse_event_list(E.event[i], example_list[i + 1])
+
+
+def read_in_xor_file(S: ExampleSet, name: str):
+    f = open(name, "r")
+    xor_example_list = f.read().split(";")
+    read_example(S, xor_example_list)
+
+
+if __name__ == "__main__":
+    S = ExampleSet("Logic")
+    read_in_xor_file(S, "scratch.txt")
+    
+
+
