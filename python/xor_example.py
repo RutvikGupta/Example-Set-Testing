@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List
 from python import example_defaults
 import re
@@ -208,13 +209,39 @@ def read_in_xor_file(S: ExampleSet, name: str):
     xor_example_list = f.read().split(";")
     read_example(S, xor_example_list)
 
+def print_out_example_set(ES: ExampleSet):
+    """
+    prints out some variables to visualize
+    :param S:
+    :return:
+    """
+    S = deepcopy(ES)
+    s = S.name
+    for example_num in range(len(S.example)):
+        s += ": example at list index " + str(example_num) + ', '
+        s += "located in ExampleSet " + S.name + "\n"
+        example = S.example[example_num]
+        for event_num in range(len(example.event)):
+            s+= "    " + "event at list index " + str(example_num) + ' : \n'
+            event = example.event[event_num]
+            s+= "    "*2 + "input Range: " + str(event.input) + '\n'
+            list_of_vals = ""
+            while event.input.next is not None:
+                list_of_vals += str(event.input.val) + ", "
+                event.input = event.input.next
+
+            s+= "    "*3 + "val: " + list_of_vals + '\n'
+            s+= "    "*2 + "target Range: " + str(event.target) + '\n'
+            s+= "    "*3 + "val: " + str(event.target.val) + '\n'
+    print(s)
+
+
 
 if __name__ == "__main__":
     S = ExampleSet("Logic")
     read_in_xor_file(S, "scratch.txt")
+    print_out_example_set(S)
 
-    print("S.example:")
-    print(S.example)
 
     
 
