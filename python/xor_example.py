@@ -193,21 +193,19 @@ def read_example(S: ExampleSet, example_list: List[str]):
     creates the example and adds it to ExampleSet"""
     # example_list is the example file but in a list of
     # substrings separated by semicolon ;
-
-    E = Example(S)
-    # add E to list of examples and update its attributes
-    register_example(E, S)
-
     example_list.pop()
     header_string = example_list[0]
-
-    E.numEvents = len(example_list) - 1
-    E.event = []
-    for _ in range(E.numEvents):
-        new_event = Event(E)
-        E.event.append(new_event)
-    for i in range(E.numEvents):
-        parse_event_list(E.event[i], example_list[i + 1])
+    S.numExamples = len(example_list) - 1
+    for j in range(S.numExamples):
+        E = Example(S)
+        register_example(E, S)
+        E.numEvents = 1
+        E.event = []
+        for _ in range(E.numEvents):
+            new_event = Event(E)
+            E.event.append(new_event)
+        for i in range(E.numEvents):
+            parse_event_list(E.event[i], example_list[j + 1])
 
 
 def register_example(E: Example, S: ExampleSet):
