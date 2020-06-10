@@ -3,7 +3,6 @@ from typing import List
 from python import example_defaults
 import re
 import numpy as np
-
 TCL_ERROR = False
 TCL_OK = True
 
@@ -151,13 +150,9 @@ class UnitGroup:
         self.event = V
         self.groupName = groupname
         self.group = np.array([])
-        if doing_inputs:
-            self.event.inputGroup.append(self.group)
-        else:
-            self.event.targetGroup.append(self.group)
         self.numUnits = num_units
 
-    def add_units(self, doing_inputs: bool, unitValue, ):
+    def add_units(self, doing_inputs: bool, unitValue):
         if doing_inputs:  # if the Range is an input
             if unitValue:
                 self.group = np.append(self.group, [unitValue])
@@ -179,6 +174,10 @@ class UnitGroup:
             else:
                 while self.group.size != self.numUnits:
                     self.group = np.append(self.group, [self.event.defaultTarget])
+        if doing_inputs:
+            self.event.inputGroup.append(self.group)
+        else:
+            self.event.targetGroup.append(self.group)
         return True
 
 

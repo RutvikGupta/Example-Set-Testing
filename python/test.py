@@ -17,9 +17,13 @@ import numpy as np
 #     event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
 #     print(event_dict)
 
-a = np.arange(9)
+a = np.array([2, 23])
+print(a)
+a = np.append(a, [])
 a = np.append(a, [2])
+print(a[1])
+print(a)
 print(a.size)
-print(a.reshape((5, 2)))
-b = np.zeros((5, 5))
-print(b)
+# print(a.reshape((5, 2)))
+# b = np.zeros((5, 5))
+# print(b)
