@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import List
 from python import example_defaults
 import re
+import numpy as np
 
 TCL_ERROR = False
 TCL_OK = True
@@ -22,8 +23,8 @@ class ExampleSet:
 
     example = []  #: List[Example]  list of examples
     permuted = []  #: List[Example]
-    currentExampleNum: int
-    currentExample = None  #: Example
+    selfentExampleNum: int
+    selfentExample = None  #: Example
     firstExample = None  #: Example
     lastExample = None  #: Example
     # Tcl_Obj defined in C macro in example.h
@@ -40,17 +41,23 @@ class ExampleSet:
     numGroupNames: int  # hidden
     maxGroupNames: int  # hidden
     groupName: list  # hidden
+    DEF_S_defaultInput: int
+    DEF_S_activeInput: int
+    DEF_S_defaultTarget: int
+    DEF_S_activeTarget: int
+    filename: str
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, filename: str, defaultInput: int, activeInput: int, defaultTarget: int,
+                 activeTarget: int):
         self.name = name
         self.pipeLoop = example_defaults.DEF_S_pipeLoop
         self.maxTime = example_defaults.DEF_S_maxTime
         self.minTime = example_defaults.DEF_S_minTime
         self.graceTime = example_defaults.DEF_S_graceTime
-        self.defaultInput = example_defaults.DEF_S_defaultInput
-        self.activeInput = example_defaults.DEF_S_activeInput
-        self.defaultTarget = example_defaults.DEF_S_defaultTarget
-        self.activeTarget = example_defaults.DEF_S_activeTarget
+        self.defaultInput = defaultInput
+        self.activeInput = activeInput
+        self.defaultTarget = defaultTarget
+        self.activeTarget = activeTarget
         # self.loadEvent = standardLoadEvent
         # self.loadExample = standardLoadExample
         self.numGroupNames = 0
@@ -58,6 +65,7 @@ class ExampleSet:
         self.groupName = []
         self.numExamples = 0
         self.example = []
+        self.filename = filename
 
 
 class Example:
@@ -93,10 +101,7 @@ class Event:
     """ Event class. Consist of information related to one event of the Example object and has Range object as inputs
         and targets
     """
-
-    input = None  #: Range
     sharedInputs: bool  # flag
-    target = None  #: range
     sharedTargets: bool  # flag
     # float = real
     maxTime: float
@@ -106,6 +111,8 @@ class Event:
     activeInput: float
     defaultTarget: float
     activeTarget: float
+    inputGroup = []  # List[np]
+    targetGroup = []  # List[np]
 
     # proc: Tcl_Obj
     example: Example
@@ -121,36 +128,58 @@ class Event:
         self.activeInput = S.activeInput
         self.defaultTarget = S.defaultTarget
         self.activeTarget = S.activeTarget
+        self.inputGroup = []
+        self.targetGroup = []
         # initEventExtension(V)
 
 
-class Range:
+class UnitGroup:
     """Range class. It stores information related to the inputs and targets of event of event class.
        It can be target OR input based on the variable doing_inputs"""
 
     groupName: str  # If null, unit offsets are for the net
     numUnits: int
-    firstUnit: int  # Only used for dense encodings
+    firstUnit: np  # Only used for dense encodings
     # float replaces real
-    val: float  # Only used for dense encodings
+    group: np  # Only used for dense encodings
 
     value: float  # Only used for sparse encodings
     unit: int  # Only used for sparse encodings
-    next = None  # Range
+    event: Event
 
-    def __init__(self, V: Event, doing_inputs: bool, L=None):
+    def __init__(self, V: Event, doing_inputs: bool, num_units: int, groupname=None):
+        self.event = V
+        self.groupName = groupname
+        self.group = np.array([])
+        if doing_inputs:
+            self.event.inputGroup.append(self.group)
+        else:
+            self.event.targetGroup.append(self.group)
+        self.numUnits = num_units
 
+    def add_units(self, doing_inputs: bool, unitValue, ):
         if doing_inputs:  # if the Range is an input
-            self.value = V.activeInput
-        else:
-            self.value = V.activeTarget
-        if L:
-            L.next = self
-        else:
-            if doing_inputs:
-                V.input = self
+            if unitValue:
+                self.group = np.append(self.group, [unitValue])
             else:
-                V.target = self
+                self.group = np.append(self.group, [self.event.defaultInput])
+        else:
+            if unitValue:
+                self.group = np.append(self.group, [unitValue])
+            else:
+                self.group = np.append(self.group, [self.event.defaultTarget])
+
+    def check_units_size(self, doing_inputs: bool):
+        if self.group.size > self.numUnits:
+            return False
+        elif self.group.size < self.numUnits:
+            if doing_inputs:
+                while self.group.size != self.numUnits:
+                    self.group = np.append(self.group, [self.event.defaultInput])
+            else:
+                while self.group.size != self.numUnits:
+                    self.group = np.append(self.group, [self.event.defaultTarget])
+        return True
 
 
 def parse_event_list(event: Event, event_list: str):
@@ -164,28 +193,21 @@ def parse_event_list(event: Event, event_list: str):
     inp_tar_lst.pop(0)
     # event_dict is a set of key-value pairs with letter keys and list of numbers value
     event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
-    # read numbers after "I: ", creates Range object containing these values
-    # and it becomes event.input
+
+    Input_group = UnitGroup(event, True, 2, "Input")
+    Target_group = UnitGroup(event, False, 1, "Target")
+
     for i in range(len(event_dict["I"])):
-        if i == 0:
-            R = Range(event, True)
+        Input_group.add_units(True, event_dict["I"][i])
 
-        else:
-            R = Range(event, True, event.input)
-        R.val = int(event_dict["I"][i])
-        R.firstUnit = R.val
-        R.numUnits = len(event_dict["I"])
-    # read numbers after "T: ", creates Range object containing these values
-    # and it becomes event.target
+    if Input_group.check_units_size(True) is False:
+        return parseError(event.example.set, "Too many units")
+
     for i in range(len(event_dict["T"])):
-        if i == 0:
-            R = Range(event, False)
+        Target_group.add_units(False, event_dict["T"][i])
 
-        else:
-            R = Range(event, False, event.input)
-        R.val = int(event_dict["T"][i])
-        R.firstUnit = R.val
-        R.numUnits = len(event_dict["T"])
+    if Target_group.check_units_size(False) is False:
+        return parseError(event.example.set, "Too many units")
 
 
 def read_example(S: ExampleSet, example_list: List[str]):
@@ -231,39 +253,39 @@ def read_in_xor_file(S: ExampleSet, name: str):
     read_example(S, xor_example_list)
 
 
-def print_out_example_set(ES: ExampleSet):
-    """
-    this function just prints out the layers of an ExampleSet
-    so it's easier to visualize. incomplete.
+def parseError(S: ExampleSet, fmt: str) -> bool:
+    print("loadExample: " + fmt + " of file " + S.filename)
+    return TCL_ERROR
 
-    """
-    S = deepcopy(ES)
-    s = S.name
-    for example_num in range(len(S.example)):
-        s += ": example at list index " + str(example_num) + ', '
-        s += "located in ExampleSet " + S.name + "\n"
-        example = S.example[example_num]
-        for event_num in range(len(example.event)):
-            s += "    " + "event at list index " + str(example_num) + ' : \n'
-            event = example.event[event_num]
-            s += "    " * 2 + "input Range: " + str(event.input) + '\n'
-            list_of_vals = ""
-            while event.input.next is not None:
-                list_of_vals += str(event.input.val) + ", "
-                event.input = event.input.next
 
-            s += "    " * 3 + "val: " + list_of_vals + '\n'
-            s += "    " * 2 + "target Range: " + str(event.target) + '\n'
-            s += "    " * 3 + "val: " + str(event.target.val) + '\n'
-    print(s)
+# def print_out_example_set(ES: ExampleSet):
+#     """
+#     this function just prints out the layers of an ExampleSet
+#     so it's easier to visualize. incomplete.
+#
+#     """
+#     S = deepcopy(ES)
+#     s = S.name
+#     for example_num in range(len(S.example)):
+#         s += ": example at list index " + str(example_num) + ', '
+#         s += "located in ExampleSet " + S.name + "\n"
+#         example = S.example[example_num]
+#         for event_num in range(len(example.event)):
+#             s += "    " + "event at list index " + str(example_num) + ' : \n'
+#             event = example.event[event_num]
+#             s += "    " * 2 + "input Range: " + str(event.input) + '\n'
+#             list_of_vals = ""
+#             while event.input.next is not None:
+#                 list_of_vals += str(event.input.val) + ", "
+#                 event.input = event.input.next
+#
+#             s += "    " * 3 + "val: " + list_of_vals + '\n'
+#             s += "    " * 2 + "target Range: " + str(event.target) + '\n'
+#             s += "    " * 3 + "val: " + str(event.target.val) + '\n'
+#     print(s)
 
 
 if __name__ == "__main__":
-    S = ExampleSet("Logic")
+    S = ExampleSet("XOR", "xor.ex", 0, 1, 0, 1)
     read_in_xor_file(S, "scratch.txt")
-    print_out_example_set(S)
-
-
-
-
-
+    # print_out_example_set(S)
