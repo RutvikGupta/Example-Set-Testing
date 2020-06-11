@@ -4,7 +4,6 @@ import re, math
 TCL_ERROR = False
 TCL_OK = True
 from python import example_defaults
-from python import util
 
 
 class ExampleSet:

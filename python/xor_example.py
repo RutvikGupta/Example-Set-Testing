@@ -3,6 +3,7 @@ from typing import List
 from python import example_defaults
 import re
 import numpy as np
+
 TCL_ERROR = False
 TCL_OK = True
 
@@ -159,7 +160,7 @@ class UnitGroup:
         self.group = np.array([])
         self.numUnits = num_units
 
-    def add_units(self, doing_inputs: bool, unitValue):
+    def add_units(self, doing_inputs: bool, unitValue: int):
         if unitValue:  # if value is not given, use default
             self.group = np.append(self.group, [unitValue])
         else:
@@ -187,6 +188,7 @@ class UnitGroup:
             self.event.targetGroup.append(self.group)
         return True
 
+
 def parse_event_list(event: Event, event_list: str):
     """parse through the list of items and populates Event object
     events in the example file are separated by semicolons. text
@@ -203,13 +205,13 @@ def parse_event_list(event: Event, event_list: str):
     Target_group = UnitGroup(event, False, 1, "Target")
 
     for i in range(len(event_dict["I"])):
-        Input_group.add_units(True, event_dict["I"][i])
+        Input_group.add_units(True, int(event_dict["I"][i]))
 
     if Input_group.check_units_size(True) is False:
         return parseError(event.example.set, "Too many units")
 
     for i in range(len(event_dict["T"])):
-        Target_group.add_units(False, event_dict["T"][i])
+        Target_group.add_units(False, int(event_dict["T"][i]))
 
     if Target_group.check_units_size(False) is False:
         return parseError(event.example.set, "Too many units")
@@ -268,6 +270,7 @@ def parseError(S: ExampleSet, fmt: str) -> bool:
     print("loadExample: " + fmt + " of file " + S.filename)
     return TCL_ERROR
 
+
 def print_out_example_set(S: ExampleSet):
     """
     this function just prints out the layers and instance variables of an ExampleSet
@@ -288,30 +291,38 @@ def print_out_example_set(S: ExampleSet):
             next_name = ex.next.name
         else:
             next_name = None
-        L.extend([("numEvents", ex.numEvents), ("set.name", ex.set.name), ("next.name", next_name), ("frequency", ex.frequency), ("probability", ex.probability)])
+        L.extend([("numEvents", ex.numEvents), ("set.name", ex.set.name), ("next.name", next_name),
+                  ("frequency", ex.frequency), ("probability", ex.probability)])
         s += get_attributes_in_string(L, 1)
         s += tab(1) + "list of events: \n"
         for event_num in range(len(ex.event)):
             ev = ex.event[event_num]
-            L = [("event index", event_num), ("example.name", ev.example.name), ("maxTime", ev.maxTime), ("minTime", ev.minTime), ("graceTime", ev.graceTime)]
-            L.extend([("defI", ev.defaultInput), ("actI", ev.activeInput), ("defT", ev.defaultTarget), ("actT", ev.activeTarget)])
+            L = [("event index", event_num), ("example.name", ev.example.name), ("maxTime", ev.maxTime),
+                 ("minTime", ev.minTime), ("graceTime", ev.graceTime)]
+            L.extend([("defI", ev.defaultInput), ("actI", ev.activeInput), ("defT", ev.defaultTarget),
+                      ("actT", ev.activeTarget)])
             s += get_attributes_in_string(L, 2)
             for input_num in range(len(ev.inputGroup)):
                 input = ev.inputGroup[input_num]
                 L = [("input group", input)]
                 s += get_attributes_in_string(L, 3)
             for target_num in range(len(ev.targetGroup)):
-                target = ev.inputGroup[target_num]
+                target = ev.targetGroup[target_num]
                 L = [("target group", target)]
                 s += get_attributes_in_string(L, 3)
     print(s)
 
+
 # helper functions for string formatting
 def tab(n=1):
     return "     " * n
+
+
 def nl():
     return "\n"
-def get_attributes_in_string(L, tab_size=0, row_size = 10):
+
+
+def get_attributes_in_string(L, tab_size=0, row_size=10):
     s = tab(tab_size)
     size = row_size
     for item in L:
@@ -322,7 +333,8 @@ def get_attributes_in_string(L, tab_size=0, row_size = 10):
         row_size -= 1
     return s + "\n"
 
+
 if __name__ == "__main__":
-    S = ExampleSet("XOR", "xor.ex", 0, 1, 0, 1)
-    read_in_xor_file(S, "scratch.txt")
+    S = ExampleSet("XOR", "xor_sparse.ex", 0, 1, 0, 1)
+    read_in_xor_file(S, "xor_dense.ex")
     print_out_example_set(S)
