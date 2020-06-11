@@ -4,10 +4,6 @@ from python import example_defaults
 import re
 import numpy as np
 
-TCL_ERROR = False
-TCL_OK = True
-
-
 class ExampleSet:
     """ ExampleSet Object. Stores a set of examples with similar properties
         on which the neural network will be trained on.
@@ -268,7 +264,7 @@ def read_in_xor_file(S: ExampleSet, name: str):
 
 def parseError(S: ExampleSet, fmt: str) -> bool:
     print("loadExample: " + fmt + " of file " + S.filename)
-    return TCL_ERROR
+    return False
 
 
 def print_out_example_set(S: ExampleSet):
