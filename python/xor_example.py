@@ -8,8 +8,9 @@ TCL_OK = True
 
 
 class ExampleSet:
-    """ ExampleSet Object. Stores a set of examples with similar properties on which the neural network will be
-        trained on.
+    """ ExampleSet Object. Stores a set of examples with similar properties
+        on which the neural network will be trained on.
+        Each .ex file contains information used to construct one ExampleSet.
     """
     name: str
     num: int
@@ -63,6 +64,7 @@ class ExampleSet:
         self.maxGroupNames = 0
         self.groupName = []
         self.numExamples = 0
+        self.numEvents = 0
         self.example = []
         self.filename = filename
 
@@ -92,12 +94,13 @@ class Example:
         self.frequency = example_defaults.DEF_E_frequency
         self.set = S
         S.numExamples += 1
+        self.event = []
 
         # initExampleExtension(E)
 
 
 class Event:
-    """ Event class. Consist of information related to one event of the Example object and has Range object as inputs
+    """ Event class. Consist of information related to one event of the Example object and has UnitGroup object as inputs
         and targets
     """
     sharedInputs: bool  # flag
@@ -120,6 +123,7 @@ class Event:
     def __init__(self, E: Example):
         S = E.set
         self.example = E
+        # E.event.append(self)
         self.maxTime = example_defaults.DEF_V_maxTime
         self.minTime = example_defaults.DEF_V_minTime
         self.graceTime = example_defaults.DEF_V_graceTime
@@ -133,14 +137,17 @@ class Event:
 
 
 class UnitGroup:
-    """Range class. It stores information related to the inputs and targets of event of event class.
-       It can be target OR input based on the variable doing_inputs"""
+    """It stores information related to the inputs and targets of event of event class.
+       It can be target OR input based on the variable doing_inputs
+       used to be called Range class
+    """
 
     groupName: str  # If null, unit offsets are for the net
     numUnits: int
     firstUnit: np  # Only used for dense encodings
     # float replaces real
     group: np  # Only used for dense encodings
+    # numpy array containing all units in this group
 
     value: float  # Only used for sparse encodings
     unit: int  # Only used for sparse encodings
@@ -153,18 +160,18 @@ class UnitGroup:
         self.numUnits = num_units
 
     def add_units(self, doing_inputs: bool, unitValue):
-        if doing_inputs:  # if the Range is an input
-            if unitValue:
-                self.group = np.append(self.group, [unitValue])
-            else:
-                self.group = np.append(self.group, [self.event.defaultInput])
+        if unitValue:  # if value is not given, use default
+            self.group = np.append(self.group, [unitValue])
         else:
-            if unitValue:
-                self.group = np.append(self.group, [unitValue])
+            if doing_inputs:  # if the Range is an input
+                self.group = np.append(self.group, [self.event.defaultInput])
             else:
                 self.group = np.append(self.group, [self.event.defaultTarget])
 
-    def check_units_size(self, doing_inputs: bool):
+    def check_units_size(self, doing_inputs: bool) -> bool:
+        """Check if group size is the correct number of units. if not, fills the
+        remaining spots in self.group with default values
+        """
         if self.group.size > self.numUnits:
             return False
         elif self.group.size < self.numUnits:
@@ -179,7 +186,6 @@ class UnitGroup:
         else:
             self.event.targetGroup.append(self.group)
         return True
-
 
 def parse_event_list(event: Event, event_list: str):
     """parse through the list of items and populates Event object
@@ -244,11 +250,17 @@ def register_example(E: Example, S: ExampleSet):
 
 
 def read_in_xor_file(S: ExampleSet, name: str):
-    """ the ExampleSet contains Examples, which contain Events, which contain
-    input and target, both of which are Range objects.
+    """ Return a list of strings separated by ";" from the file given by name
+    the ExampleSet contains Examples, which contain Events, which contain
+    input and target, both of which are UnitGroup objects.
     """
+    # open file as string f
     f = open(name, "r")
-    xor_example_list = f.read().split(";")
+    # split file by ";"
+    split_list = f.read().split(";")
+    xor_example_list = []
+    for e in split_list:
+        xor_example_list.append(e.strip())
     read_example(S, xor_example_list)
 
 
@@ -256,35 +268,61 @@ def parseError(S: ExampleSet, fmt: str) -> bool:
     print("loadExample: " + fmt + " of file " + S.filename)
     return TCL_ERROR
 
+def print_out_example_set(S: ExampleSet):
+    """
+    this function just prints out the layers and instance variables of an ExampleSet
+    so it's easier to visualize, for testing purposes.
+    each new layer is indicated by indent.
 
-# def print_out_example_set(ES: ExampleSet):
-#     """
-#     this function just prints out the layers of an ExampleSet
-#     so it's easier to visualize. incomplete.
-#
-#     """
-#     S = deepcopy(ES)
-#     s = S.name
-#     for example_num in range(len(S.example)):
-#         s += ": example at list index " + str(example_num) + ', '
-#         s += "located in ExampleSet " + S.name + "\n"
-#         example = S.example[example_num]
-#         for event_num in range(len(example.event)):
-#             s += "    " + "event at list index " + str(example_num) + ' : \n'
-#             event = example.event[event_num]
-#             s += "    " * 2 + "input Range: " + str(event.input) + '\n'
-#             list_of_vals = ""
-#             while event.input.next is not None:
-#                 list_of_vals += str(event.input.val) + ", "
-#                 event.input = event.input.next
-#
-#             s += "    " * 3 + "val: " + list_of_vals + '\n'
-#             s += "    " * 2 + "target Range: " + str(event.target) + '\n'
-#             s += "    " * 3 + "val: " + str(event.target.val) + '\n'
-#     print(s)
+    """
+    s = ""
+    s += "printing ExampleSet " + S.name + "\n"
+    L = [("fileName", S.filename), ("numEvents", S.numEvents), ("defI", S.defaultInput)]
+    L.extend([("actI", S.activeInput), ("defT", S.defaultTarget), ("actT", S.activeTarget)])
+    s += get_attributes_in_string(L)
+    s += "list of examples: \n"
+    for example_num in range(len(S.example)):
+        ex = S.example[example_num]
+        L = [("example index", example_num), ("name", ex.name), ("num", ex.num)]
+        if ex.next is not None:
+            next_name = ex.next.name
+        else:
+            next_name = None
+        L.extend([("numEvents", ex.numEvents), ("set.name", ex.set.name), ("next.name", next_name), ("frequency", ex.frequency), ("probability", ex.probability)])
+        s += get_attributes_in_string(L, 1)
+        s += tab(1) + "list of events: \n"
+        for event_num in range(len(ex.event)):
+            ev = ex.event[event_num]
+            L = [("event index", event_num), ("example.name", ev.example.name), ("maxTime", ev.maxTime), ("minTime", ev.minTime), ("graceTime", ev.graceTime)]
+            L.extend([("defI", ev.defaultInput), ("actI", ev.activeInput), ("defT", ev.defaultTarget), ("actT", ev.activeTarget)])
+            s += get_attributes_in_string(L, 2)
+            for input_num in range(len(ev.inputGroup)):
+                input = ev.inputGroup[input_num]
+                L = [("input group", input)]
+                s += get_attributes_in_string(L, 3)
+            for target_num in range(len(ev.targetGroup)):
+                target = ev.inputGroup[target_num]
+                L = [("target group", target)]
+                s += get_attributes_in_string(L, 3)
+    print(s)
 
+# helper functions for string formatting
+def tab(n=1):
+    return "     " * n
+def nl():
+    return "\n"
+def get_attributes_in_string(L, tab_size=0, row_size = 10):
+    s = tab(tab_size)
+    size = row_size
+    for item in L:
+        s += item[0] + " = " + str(item[1]) + ", "
+        if row_size == 0:
+            s += "\n" + tab(tab_size)
+            row_size = size
+        row_size -= 1
+    return s + "\n"
 
 if __name__ == "__main__":
     S = ExampleSet("XOR", "xor.ex", 0, 1, 0, 1)
     read_in_xor_file(S, "scratch.txt")
-    # print_out_example_set(S)
+    print_out_example_set(S)
