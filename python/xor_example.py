@@ -4,6 +4,7 @@ from python import example_defaults
 import re
 import numpy as np
 
+
 class ExampleSet:
     """ExampleSet Object. Stores a set of examples with similar properties
     on which the neural network will be trained on.
@@ -120,7 +121,6 @@ class ExampleSet:
 
 
 class Example:
-
     """ Example class. The object which stores information related to one example of the
     ExampleSet and has a list of events which will be executed by the neural network
 
@@ -152,7 +152,7 @@ class Example:
     frequency: float
     probability = 0.0  #: float
 
-    # proc: Tcl_Obj
+    proc = None
 
     # proc function is defined in the C macros
 
@@ -227,7 +227,6 @@ class Event:
 
 
 class UnitGroup:
-
     """It stores information related to the inputs and targets of event of event class.
     It can be target OR input based on the variable doing_inputs.
     Used to be called Range class.
@@ -345,6 +344,50 @@ def parse_event_list(event: Event, event_list: str):
         return parseError(event.example.set, "Too many units")
 
 
+def ignore_commented_lines(example_array: str):
+    while '#' in example_array:
+        index = example_array.find("#")
+        find_newline = example_array[index:].find("\n")
+        example_array = example_array.replace(example_array[index: find_newline + 1], '\n')
+    return example_array
+
+
+def parse_example_arguments(E: Example, example_array: str):
+    if "name:" in example_array:
+        index = example_array.find("name:")
+        find_newline = example_array[index:].find("\n")
+        example_name = example_array[index + len("name:"): index + find_newline]
+        E.name = example_name
+        example_array = example_array.replace(example_array[index: find_newline + 1], '')
+
+    if "freq:" in example_array:
+        index = example_array.find("freq:")
+        find_newline = example_array[index:].find("\n")
+        example_freq = example_array[index + len("freq:"): index + find_newline]
+        if "." in example_freq:
+            E.frequency = float(example_freq)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+
+    if "proc:" in example_array:
+        index = example_array.find("proc:")
+        find_newline = example_array[index:].find("\n")
+        example_proc = example_array[index + len("proc:"): index + find_newline]
+        E.proc = float(example_proc)
+        example_array = example_array.replace(example_array[index: find_newline + 1], '')
+
+    regex = re.compile("(^|\\n)[0-9]+(\\n|$)")
+    matched = regex.search(example_array)
+    if matched is not None:
+        start = matched.start()
+        end = matched.end()
+        num = example_array[start + 1: end]
+        if num.isdigit():
+            E.num_events = int(num)
+            example_array = example_array.replace(example_array[start: end], '')
+
+    return example_array
+
+
 def read_example(S: ExampleSet, example_list: List[str]):
     """ Read the example_list from the .ex file, fill attributes of S and
     registers the example (represented by example_list) in S by calling register_example(.)
@@ -361,6 +404,8 @@ def read_example(S: ExampleSet, example_list: List[str]):
     for j in range(S.num_examples):
         E = Example(S)
         register_example(E, S)
+        example_list[j + 1] = ignore_commented_lines(example_list[j + 1])
+        example_list[j + 1] = parse_example_arguments(E, example_list[j + 1])
         E.num_events = 1
         E.event = []
         for _ in range(E.num_events):
@@ -368,6 +413,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
             E.event.append(new_event)
         for i in range(E.num_events):
             parse_event_list(E.event[i], example_list[j + 1])
+
 
 def register_example(E: Example, S: ExampleSet):
     """ Add Example E to ExampleSet S and update the attributes of S
@@ -390,7 +436,7 @@ def register_example(E: Example, S: ExampleSet):
     E.set = S
 
 
-def read_in_xor_file(S: ExampleSet, name: str) -> List[str]:
+def read_in_file(S: ExampleSet, name: str):
     """ Return a list of strings separated by ";" from name .ex file and then
     fills S object with information from the file by calling read_example
 
@@ -403,10 +449,10 @@ def read_in_xor_file(S: ExampleSet, name: str) -> List[str]:
     f = open(name, "r")
     # split file by ";"
     split_list = f.read().split(";")
-    xor_example_list = []
+    example_list = []
     for e in split_list:
-        xor_example_list.append(e.strip())
-    read_example(S, xor_example_list)
+        example_list.append(e.strip())
+    read_example(S, example_list)
 
 
 def parseError(S: ExampleSet, fmt: str) -> bool:
@@ -414,6 +460,7 @@ def parseError(S: ExampleSet, fmt: str) -> bool:
     """
     print("loadExample: " + fmt + " of file " + S.file_name)
     return False
+
 
 def print_out_example_set(S: ExampleSet):
     """ Prints out the instance variables of an ExampleSet and of its Examples.
@@ -433,6 +480,7 @@ def print_out_example_set(S: ExampleSet):
         ex = S.example[example_num]
         s += print_out_example(ex, False, 1)
     print(s)
+
 
 def print_out_example(E: Example, printing=True, tabs=0):
     """ Prints out the instance variables of an Example and of its Events
@@ -457,10 +505,11 @@ def print_out_example(E: Example, printing=True, tabs=0):
     s += format_object_line(L, tabs)
     for event_num in range(len(ex.event)):
         ev = ex.event[event_num]
-        s += print_out_event(ev, False, tabs+1)
+        s += print_out_event(ev, False, tabs + 1)
     if printing:
         print(s)
     return s
+
 
 def print_out_event(E: Event, printing=True, tabs=0):
     """ Prints out the instance variables of an Event and of its input and target groups
@@ -470,6 +519,8 @@ def print_out_event(E: Event, printing=True, tabs=0):
     If calling this function directly, please leave
     printing=True and tabs=0 to their default values.
 
+    :param tabs: int
+    :param printing: bool
     :param E: the example to be printed
     :type E: Example
     """
@@ -484,11 +535,11 @@ def print_out_event(E: Event, printing=True, tabs=0):
     for input_num in range(len(ev.input_group)):
         input = ev.input_group[input_num]
         L = [("input group", input)]
-        s += format_object_line(L, tabs+1)
+        s += format_object_line(L, tabs + 1)
     for target_num in range(len(ev.target_group)):
         target = ev.target_group[target_num]
         L = [("target group", target)]
-        s += format_object_line(L, tabs+1)
+        s += format_object_line(L, tabs + 1)
     if printing:
         print(s)
     return s
@@ -497,6 +548,8 @@ def print_out_event(E: Event, printing=True, tabs=0):
 # These are helper functions for the printing functions.
 def tab(n=1):
     return "     " * n
+
+
 def format_object_line(L, num_tabs=0, row_size=10):
     s = tab(num_tabs)
     size = row_size
@@ -508,9 +561,10 @@ def format_object_line(L, num_tabs=0, row_size=10):
         # row_size -= 1
     return s + "\n"
 
+
 if __name__ == "__main__":
     S = ExampleSet("XOR", "xor_dense.ex", 0, 1, 0, 1)
-    read_in_xor_file(S, "xor_dense.ex")
+    read_in_file(S, "xor_dense.ex")
     print_out_example_set(S)
     print_out_example(S.first_example)
     print_out_event(S.first_example.event[0])
