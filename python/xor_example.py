@@ -89,8 +89,8 @@ class Example:
 
     # proc function is defined in the C macros
 
-    def __init__(self, S: ExampleSet):
-        self.frequency = example_defaults.DEF_E_frequency
+    def __init__(self, S: ExampleSet, frequency=example_defaults.DEF_E_frequency):
+        self.frequency = frequency
         self.set = S
         S.numExamples += 1
         self.event = []
