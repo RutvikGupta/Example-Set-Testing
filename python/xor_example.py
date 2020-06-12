@@ -45,12 +45,14 @@ class ExampleSet:
     filename: str
 
     def __init__(self, name: str, filename: str, defaultInput: int, activeInput: int, defaultTarget: int,
-                 activeTarget: int):
+                 activeTarget: int, Def_S_pipeLoop=example_defaults.DEF_S_pipeLoop,
+                 Def_S_maxTime=example_defaults.DEF_S_maxTime, Def_S_minTime=example_defaults.DEF_S_minTime,
+                 Def_S_graceTime=example_defaults.DEF_S_graceTime):
         self.name = name
-        self.pipeLoop = example_defaults.DEF_S_pipeLoop
-        self.maxTime = example_defaults.DEF_S_maxTime
-        self.minTime = example_defaults.DEF_S_minTime
-        self.graceTime = example_defaults.DEF_S_graceTime
+        self.pipeLoop = Def_S_pipeLoop
+        self.maxTime = Def_S_maxTime
+        self.minTime = Def_S_minTime
+        self.graceTime = Def_S_graceTime
         self.defaultInput = defaultInput
         self.activeInput = activeInput
         self.defaultTarget = defaultTarget
