@@ -344,6 +344,87 @@ def parse_event_list(event: Event, event_list: str):
         return parseError(event.example.set, "Too many units")
 
 
+def parse_event_arguments(event: Event, example_array: str):
+    if "max:" in example_array:
+        index = example_array.find("max:")
+        find_newline = example_array[index:].find("\n")
+        example_max = example_array[index + len("max:"): index + find_newline]
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_max):
+            event.max_time = float(example_max)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+        else:
+            parseError(S, "missing value after \"max:\" in event header")
+
+    if "min" in example_array:
+        index = example_array.find("min:")
+        find_newline = example_array[index:].find("\n")
+        example_min = example_array[index + len("min:"): index + find_newline]
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_min):
+            event.min_time = float(example_min)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+        else:
+            parseError(S, "missing value after \"min:\" in event header")
+
+    if "grace" in example_array:
+        index = example_array.find("grace:")
+        find_newline = example_array[index:].find("\n")
+        example_grace = example_array[index + len("grace:"): index + find_newline]
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_grace):
+            event.grace_time = float(example_grace)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+        else:
+            parseError(S, "missing value after \"grace:\" in event header")
+
+    if "defI" in example_array:
+        index = example_array.find("defI:")
+        find_newline = example_array[index:].find("\n")
+        example_defI = example_array[index + len("defI:"): index + find_newline]
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_defI):
+            event.default_input = float(example_defI)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+        else:
+            parseError(S, "missing value after \"defI:\" in event header")
+
+    if "defT" in example_array:
+        index = example_array.find("defT:")
+        find_newline = example_array[index:].find("\n")
+        example_defT = example_array[index + len("defT:"): index + find_newline]
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_defT):
+            event.default_target = float(example_defT)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+        else:
+            parseError(S, "missing value after \"defT:\" in event header")
+
+    if "actT" in example_array:
+        index = example_array.find("actT:")
+        find_newline = example_array[index:].find("\n")
+        example_actT = example_array[index + len("actT:"): index + find_newline]
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_actT):
+            event.active_target = float(example_actT)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+        else:
+            parseError(S, "missing value after \"actT:\" in event header")
+
+    if "actI" in example_array:
+        index = example_array.find("actI:")
+        find_newline = example_array[index:].find("\n")
+        example_actI = example_array[index + len("actI:"): index + find_newline]
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_actI):
+            event.active_input = float(example_actI)
+            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+        else:
+            parseError(S, "missing value after \"actI:\" in event header")
+
+    return example_array
+
+
 def ignore_commented_lines(example_array: str):
     while '#' in example_array:
         index = example_array.find("#")
@@ -364,7 +445,8 @@ def parse_example_arguments(E: Example, example_array: str):
         index = example_array.find("freq:")
         find_newline = example_array[index:].find("\n")
         example_freq = example_array[index + len("freq:"): index + find_newline]
-        if "." in example_freq:
+        p = re.compile("[0-9]+.[0-9]+")
+        if p.match(example_freq):
             E.frequency = float(example_freq)
             example_array = example_array.replace(example_array[index: find_newline + 1], '')
 
