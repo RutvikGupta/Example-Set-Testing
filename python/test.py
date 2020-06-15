@@ -10,16 +10,18 @@ for i in list:
 
 print(a)
 element = a[0]
-if "defT:" in element:
-    index = element.find("defT:")
-    find_newline = element[index:].find("\n")
-    x = element[index + len("defT:"): index + find_newline]
-    print(x)
-print(element)
-p = re.compile("(^|\\n)[0-9]+(\\n|$)")
-m = p.search(element)
-print(m)
-print(element[m.start() + 1: m.end()])
+print(re.findall(r'\[(.+)\]', element))
+print(re.split(r'\[.+\]', element))
+# if "defT:" in element:
+#     index = element.find("defT:")
+#     find_newline = element[index:].find("\n")
+#     x = element[index + len("defT:"): index + find_newline]
+#     print(x)
+# print(element)
+# p = re.compile("(^|\\n)[0-9]+(\\n|$)")
+# m = p.search(element)
+# print(m)
+# print(element[m.start() + 1: m.end()])
 # if m is not None:
 #     start = m.start()
 #     end = m.end()
