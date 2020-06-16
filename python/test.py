@@ -15,8 +15,18 @@ for i in list:
 print(a)
 element = a[0]
 print(re.findall(r'\[(.+)\]', element))
-print(re.split(r'\[.+\]', element))
-# p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
+lst = re.split(r'\[.+\]', element)
+print(lst)
+inp_tar_lst = re.split("[IT]:", lst[1])
+print(inp_tar_lst)
+
+def ignore_commented_lines(example_array: str):
+    while '#' in example_array:
+        index = example_array.find("#")
+        find_newline = example_array[index:].find("\n")
+        example_array = example_array.replace(example_array[index: find_newline + 1], '\n')
+    return example_array
+
 # print(p.match("2"))
 # if "defT:" in element:
 #     index = element.find("defT:")

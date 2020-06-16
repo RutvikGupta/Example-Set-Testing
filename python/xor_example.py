@@ -152,7 +152,6 @@ class Example:
     def __init__(self, S: ExampleSet, frequency=example_defaults.DEF_E_frequency):
         self.frequency = frequency
         self.set = S
-        S.num_examples += 1
         self.event = []
         self.events_data = []
         self.event_headers = []
@@ -315,15 +314,16 @@ def parse_event_list(event: Event, event_list: str):
     :return: false if an error is found
     "rtype: optional, false
     """
-    inp_tar_lst = re.split("[A-Z]:", event_list)
+    event_list = event_list.strip()
+    inp_tar_lst = re.split("[IT]:", event_list)
     # separates by letter (dense only) and removes the first value
     # because it's the description and does not contain data
     inp_tar_lst.pop(0)
     # event_dict is a set of key-value pairs with letter keys and list of numbers value
     event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
 
-    Input_group = UnitGroup(event, True, 2, "Input")
-    Target_group = UnitGroup(event, False, 1, "Target")
+    Input_group = UnitGroup(event, True, len(event_dict["I"]), "Input")
+    Target_group = UnitGroup(event, False, len(event_dict["T"]), "Target")
 
     for i in range(len(event_dict["I"])):
         Input_group.add_units(True, int(event_dict["I"][i]))
@@ -410,11 +410,11 @@ def parse_example_set_header_string(S: ExampleSet, example_header: str):
     return example_header
 
 
-def parse_event_header_list(event: Event, event_header: str):
-    delimters = re.findall(r'[0-9]\s', event_header)
+def parse_event_header_string(event: Event, event_header: str):
+    delimiters = re.findall(r'[0-9]\s', event_header)
     event_header_list = re.split(r'[0-9]\s', event_header)
-    for i in range(len(delimters)):
-        event_header_list[i] += delimters[i].strip()
+    for i in range(len(delimiters)):
+        event_header_list[i] += delimiters[i].strip()
 
     lookup_list = ["proc:", "min:", "max:", "grace:", "defI", "defT", "actT", "actI"]
     for lookup_string in lookup_list:
@@ -495,22 +495,24 @@ def read_example(S: ExampleSet, example_list: List[str]):
     """
     example_list.pop()
     header_string = example_list[0]
-    parse_example_set_header_string(S, header_string)
-    S.num_examples = len(example_list) - 1
+    header_string = parse_example_set_header_string(S, header_string)
+    if header_string.strip() == '':
+        example_list.pop(0)
+    S.num_examples = len(example_list)
     for j in range(S.num_examples):
         E = Example(S)
         register_example(E, S)
-        example_list[j + 1] = ignore_commented_lines(example_list[j + 1])
-        example_list[j + 1] = parse_example_arguments(E, example_list[j + 1])
-        parse_example_string(E, example_list[j + 1])
+        example_list[j] = ignore_commented_lines(example_list[j])
+        example_list[j] = parse_example_arguments(E, example_list[j])
+        parse_example_string(E, example_list[j])
         for _ in range(E.num_events):
             new_event = Event(E)
             E.event.append(new_event)
         if E.num_events == 1:
-            parse_event_list(E.event[0], example_list[j + 1])
+            parse_event_list(E.event[0], example_list[j])
         else:
             for i in range(E.num_events):
-                parse_event_header_list(E.event[i], E.event_headers[i])
+                parse_event_header_string(E.event[i], E.event_headers[i])
                 parse_event_list(E.event[i], E.events_data[i])
 
 
