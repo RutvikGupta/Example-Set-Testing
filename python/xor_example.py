@@ -403,8 +403,8 @@ def parse_example_set_header_string(S: ExampleSet, example_header: str):
     for lookup_string in lookup_list:
         if lookup_string in example_header:
             index = example_header.find(lookup_string)
-            find_newline = example_header[index:].find("\n")
-            value = example_header[index + len(lookup_string): index + find_newline].strip()
+            find_newline = example_header[index:].find("\n") + index
+            value = example_header[index + len(lookup_string): find_newline].strip()
             assign_field_values(lookup_string, S, value, "Example Set")
             example_header = example_header.replace(example_header[index: find_newline + 1], '')
     return example_header
@@ -433,7 +433,7 @@ def parse_event_header_string(event: Event, event_header: str):
 def ignore_commented_lines(example_array: str):
     while '#' in example_array:
         index = example_array.find("#")
-        find_newline = example_array[index:].find("\n")
+        find_newline = example_array[index:].find("\n") + index
         example_array = example_array.replace(example_array[index: find_newline + 1], '\n')
     return example_array
 
@@ -450,15 +450,15 @@ def parse_example_string(E: Example, example_array: str):
 def parse_example_arguments(E: Example, example_array: str):
     if "name:" in example_array:
         index = example_array.find("name:")
-        find_newline = example_array[index:].find("\n")
-        example_name = example_array[index + len("name:"): index + find_newline]
+        find_newline = example_array[index:].find("\n") + index
+        example_name = example_array[index + len("name:"): find_newline]
         E.name = example_name
         example_array = example_array.replace(example_array[index: find_newline + 1], '')
 
     if "freq:" in example_array:
         index = example_array.find("freq:")
-        find_newline = example_array[index:].find("\n")
-        example_freq = example_array[index + len("freq:"): index + find_newline]
+        find_newline = example_array[index:].find("\n") + index
+        example_freq = example_array[index + len("freq:"): find_newline]
         p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
         if p.match(example_freq):
             E.frequency = float(example_freq)
@@ -466,8 +466,8 @@ def parse_example_arguments(E: Example, example_array: str):
 
     if "proc:" in example_array:
         index = example_array.find("proc:")
-        find_newline = example_array[index:].find("\n")
-        example_proc = example_array[index + len("proc:"): index + find_newline]
+        find_newline = example_array[index:].find("\n") + index
+        example_proc = example_array[index + len("proc:"): find_newline]
         E.proc = example_proc
         example_array = example_array.replace(example_array[index: find_newline + 1], '')
 
@@ -531,7 +531,6 @@ def register_example(E: Example, S: ExampleSet):
     else:
         S.last_example.next = E
         S.last_example = E
-    S.num_examples += 1
     S.example.append(E)
     E.set = S
 
@@ -663,8 +662,8 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    S = ExampleSet("XOR", "xor_dense.ex", 0, 1, 0, 1)
-    read_in_file(S, "xor_dense.ex")
+    S = ExampleSet("XOR", "train4.ex", 0, 1, 0, 1)
+    read_in_file(S, "train4.ex")
     print_out_example_set(S)
     print_out_example(S.first_example)
     print_out_event(S.first_example.event[0])
