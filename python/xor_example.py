@@ -338,6 +338,65 @@ def parse_event_list(event: Event, event_list: str):
         return parseError(event.example.set, "Too many units")
 
 
+def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type: str, event=None):
+    if (event is not None) and (type(event) is Event):
+        obj = event
+    else:
+        obj = S
+    p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
+    if lookup_string == "proc:":
+        obj.proc = value
+    elif lookup_string == "min:":
+        if p.match(value):
+            obj.min_time = float(value)
+        elif value == "-":
+            obj.min_time = None
+        else:
+            return parseError(S, "missing value after \"min:\" in " + obj_type + " header")
+    elif lookup_string == "max:":
+        if p.match(value):
+            obj.min_time = float(value)
+        elif value == "-":
+            obj.min_time = None
+        else:
+            return parseError(S, "missing value after \"max:\" in " + obj_type + " header")
+    elif lookup_string == "grace:":
+        if p.match(value):
+            obj.grace_time = float(value)
+        elif value == "-":
+            obj.grace_time = None
+        else:
+            return parseError(S, "missing value after \"grace:\" in " + obj_type + " header")
+    elif lookup_string == "defI:":
+        if p.match(value):
+            obj.default_input = float(value)
+        elif value == "-":
+            obj.default_input = None
+        else:
+            return parseError(S, "missing value after \"defI:\" in " + obj_type + " header")
+    elif lookup_string == "defT:":
+        if p.match(value):
+            obj.default_target = float(value)
+        elif value == "-":
+            obj.default_target = None
+        else:
+            return parseError(S, "missing value after \"defT:\" in " + obj_type + " header")
+    elif lookup_string == "actI:":
+        if p.match(value):
+            obj.active_input = float(value)
+        elif value == "-":
+            obj.active_input = None
+        else:
+            return parseError(S, "missing value after \"actI:\" in " + obj_type + " header")
+    elif lookup_string == "actT:":
+        if p.match(value):
+            obj.active_target = float(value)
+        elif value == "-":
+            obj.active_target = None
+        else:
+            parseError(S, "missing value after \"actT:\" in " + obj_type + " header")
+
+
 def parse_example_set_header_string(S: ExampleSet, example_header: str):
     example_header += "\n"
     lookup_list = ["proc:", "min:", "max:", "grace:", "defI", "defT", "actT", "actI"]
@@ -346,119 +405,28 @@ def parse_example_set_header_string(S: ExampleSet, example_header: str):
             index = example_header.find(lookup_string)
             find_newline = example_header[index:].find("\n")
             value = example_header[index + len(lookup_string): index + find_newline].strip()
-            p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
-            if lookup_string == "proc:":
-                S.proc = value
-            elif lookup_string == "min:":
-                if p.match(value):
-                    S.min_time = float(value)
-                elif value == "-":
-                    S.min_time = None
-                else:
-                    return parseError(S, "missing value after \"min:\" in event header")
-            elif lookup_string == "max:":
-                if p.match(value):
-                    S.min_time = float(value)
-                elif value == "-":
-                    S.min_time = None
-                else:
-                    return parseError(S, "missing value after \"max:\" in event header")
-            elif lookup_string == "grace:":
-                if p.match(value):
-                    S.grace_time = float(value)
-                elif value == "-":
-                    S.grace_time = None
-                else:
-                    return parseError(S, "missing value after \"grace:\" in event header")
-            elif lookup_string == "defI:":
-                if p.match(value):
-                    S.default_input = float(value)
-                elif value == "-":
-                    S.default_input = None
-                else:
-                    return parseError(S, "missing value after \"defI:\" in event header")
-            elif lookup_string == "defT:":
-                if p.match(value):
-                    S.default_target = float(value)
-                elif value == "-":
-                    S.default_target = None
-                else:
-                    return parseError(S, "missing value after \"defT:\" in event header")
-            elif lookup_string == "actI:":
-                if p.match(value):
-                    S.active_input = float(value)
-                elif value == "-":
-                    S.active_input = None
-                else:
-                    return parseError(S, "missing value after \"actI:\" in event header")
-            elif lookup_string == "actT:":
-                if p.match(value):
-                    S.active_target = float(value)
-                elif value == "-":
-                    S.active_target = None
-                else:
-                    parseError(S, "missing value after \"actT:\" in event header")
+            assign_field_values(lookup_string, S, value, "Example Set")
             example_header = example_header.replace(example_header[index: find_newline + 1], '')
     return example_header
 
 
-def parse_event_header_list(event: Event, event_header_list: List[str]):
-    lookup_list = ["name:", "min:", "max:", "grace:", "defI", "defT", "actT", "actI"]
+def parse_event_header_list(event: Event, event_header: str):
+    delimters = re.findall(r'[0-9]\s', event_header)
+    event_header_list = re.split(r'[0-9]\s', event_header)
+    for i in range(len(delimters)):
+        event_header_list[i] += delimters[i].strip()
+
+    lookup_list = ["proc:", "min:", "max:", "grace:", "defI", "defT", "actT", "actI"]
     for lookup_string in lookup_list:
         for element in event_header_list:
             if lookup_string in element:
                 colon_index = element.find(":")
-                value = element[colon_index + 1:].strip()
-                p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
-                if lookup_string == "min:":
-                    if p.match(value):
-                        event.min_time = float(value)
-                    elif value == "-":
-                        event.min_time = None
-                    else:
-                        return parseError(event.example.set, "missing value after \"min:\" in event header")
-                elif lookup_string == "max:":
-                    if p.match(value):
-                        event.max_time = float(value)
-                    elif value == "-":
-                        event.max_time = None
-                    else:
-                        return parseError(event.example.set, "missing value after \"max:\" in event header")
-                elif lookup_string == "grace:":
-                    if p.match(value):
-                        event.grace_time = float(value)
-                    elif value == "-":
-                        event.grace_time = None
-                    else:
-                        return parseError(event.example.set, "missing value after \"grace:\" in event header")
-                elif lookup_string == "defI:":
-                    if p.match(value):
-                        event.default_input = float(value)
-                    elif value == "-":
-                        event.default_input = None
-                    else:
-                        return parseError(event.example.set, "missing value after \"defI:\" in event header")
-                elif lookup_string == "defT:":
-                    if p.match(value):
-                        event.default_target = float(value)
-                    elif value == "-":
-                        event.default_target = None
-                    else:
-                        return parseError(event.example.set, "missing value after \"defT:\" in event header")
-                elif lookup_string == "actI:":
-                    if p.match(value):
-                        event.active_input = float(value)
-                    elif value == "-":
-                        event.active_input = None
-                    else:
-                        return parseError(event.example.set, "missing value after \"actI:\" in event header")
-                elif lookup_string == "actT:":
-                    if p.match(value):
-                        event.active_target = float(value)
-                    elif value == "-":
-                        event.active_target = None
-                    else:
-                        parseError(event.example.set, "missing value after \"actT:\" in event header")
+                if " " in element:
+                    value = element[colon_index + 2:].strip()
+                else:
+                    value = element[colon_index + 1:].strip()
+                assign_field_values(lookup_string, event.example.set, value, "Event", event)
+                break
     return True
 
 

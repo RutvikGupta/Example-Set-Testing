@@ -5,9 +5,9 @@ f = open("train4.ex", "r")
 
 list = f.read().split(";")
 print(list)
-f2 = open("scratch.txt", "r")
-list2 = f2.read().split(";")
-print(list2)
+# f2 = open("scratch.txt", "r")
+# list2 = f2.read().split(";")
+# print(list2)
 a = []
 for i in list:
     a.append(i.strip())
@@ -16,7 +16,8 @@ print(a)
 element = a[0]
 print(re.findall(r'\[(.+)\]', element))
 print(re.split(r'\[.+\]', element))
-
+# p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
+# print(p.match("2"))
 # if "defT:" in element:
 #     index = element.find("defT:")
 #     find_newline = element[index:].find("\n")
