@@ -412,15 +412,19 @@ def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type:
 
 
 def parse_example_set_header_string(S: ExampleSet, example_header: str):
+    square_index = float("inf")
+    if "[" in example_header:
+        square_index = example_header.find("[")
     example_header += "\n"
-    lookup_list = ["proc:", "min:", "max:", "grace:", "defI", "defT", "actT", "actI"]
+    lookup_list = ["proc:", "min:", "max:", "grace:", "defI:", "defT:", "actT:", "actI:"]
     for lookup_string in lookup_list:
         if lookup_string in example_header:
             index = example_header.find(lookup_string)
-            find_newline = example_header[index:].find("\n") + index
-            value = example_header[index + len(lookup_string): find_newline].strip()
-            assign_field_values(lookup_string, S, value, "Example Set")
-            example_header = example_header.replace(example_header[index: find_newline + 1], '')
+            if index < square_index:
+                find_newline = example_header[index:].find("\n") + index
+                value = example_header[index + len(lookup_string): find_newline].strip()
+                assign_field_values(lookup_string, S, value, "Example Set")
+                example_header = example_header.replace(example_header[index: find_newline + 1], '')
     return example_header
 
 
@@ -430,7 +434,7 @@ def parse_event_header_string(event: Event, event_header: str):
     for i in range(len(delimiters)):
         event_header_list[i] += delimiters[i].strip()
 
-    lookup_list = ["proc:", "min:", "max:", "grace:", "defI", "defT", "actT", "actI"]
+    lookup_list = ["proc:", "min:", "max:", "grace:", "defI:", "defT:", "actT:", "actI:"]
     for lookup_string in lookup_list:
         for element in event_header_list:
             if lookup_string in element:
@@ -508,12 +512,10 @@ def read_example(S: ExampleSet, example_list: List[str]):
     :type example_list: List[str]
     """
     example_list.pop()
-
-    #
-    # header_string = example_list[0]
-    # header_string = parse_example_set_header_string(S, header_string)
-    # if header_string.strip() == '':
-    #     example_list.pop(0)
+    header_string = example_list[0]
+    header_string = parse_example_set_header_string(S, header_string)
+    if header_string.strip() == '':
+        example_list.pop(0)
 
     # if header is empty then remove header
     S.num_examples = len(example_list)
@@ -531,7 +533,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
         else:
             for i in range(E.num_events):
                 parse_event_header_string(E.event[i], E.event_headers[i])
-                # parse_event_list(E.event[i], E.events_data[i])
+                parse_event_list(E.event[i], E.events_data[i])
 
 
 def register_example(E: Example, S: ExampleSet):
@@ -681,8 +683,8 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    S = ExampleSet("XOR", "xor_dense.ex", 0, 1, 0, 1)
-    read_in_file(S, "xor_dense.ex")
+    S = ExampleSet("XOR", "train4.ex", 0, 1, 0, 1)
+    read_in_file(S, "train4.ex")
     print_out_example_set(S)
     print_out_example(S.first_example)
     print_out_event(S.first_example.event[0])
