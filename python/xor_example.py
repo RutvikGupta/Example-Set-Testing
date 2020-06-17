@@ -530,8 +530,8 @@ def read_example(S: ExampleSet, example_list: List[str]):
         # example_list[j] = ignore_commented_lines(example_list[j])
         example_list[j] = parse_example_arguments(E, example_list[j])
         parse_example_string(E, example_list[j])
-        E.events_data.pop(0)
-
+        if E.events_data != [] and E.events_data[0] == "":
+            E.events_data.pop(0)
         for _ in range(E.num_events):
             new_event = Event(E)
             E.event.append(new_event)
@@ -690,8 +690,8 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    S = ExampleSet("XOR", "train4.ex", 0, 1, 0, 1)
-    read_in_file(S, "train4.ex")
-    print_out_example_set(S)
-    print_out_example(S.first_example)
-    print_out_event(S.first_example.event[0])
+    S = ExampleSet("XOR", "xor_dense.ex", 0, 1, 0, 1)
+    read_in_file(S, "xor_dense.ex")
+    # S = ExampleSet("train", "train4.ex", 0, 1, 0, 1)
+    # read_in_file(S, "train4.ex")
+    S.print_out()

@@ -50,8 +50,11 @@ for e in split_list:
 print(split_list)
 print(example_list)
 example_list.pop()
-# header_string = example_list[0]
-# print(header_string)
+print("header string")
+header_string = example_list[0]
+header_string = parse_example_set_header_string(S, header_string)
+if header_string.strip() == '':
+    example_list.pop(0)
 
 S.num_examples = len(example_list)
 for j in range(S.num_examples):
@@ -59,6 +62,8 @@ for j in range(S.num_examples):
     register_example(E, S)
     # example_list[j] = ignore_commented_lines(example_list[j])
     example_list[j] = parse_example_arguments(E, example_list[j])
+    print("example list[j]")
+    print(example_list[j])
     parse_example_string(E, example_list[j])
     for _ in range(E.num_events):
         new_event = Event(E)
@@ -66,12 +71,11 @@ for j in range(S.num_examples):
     if E.num_events == 1:
         parse_event_list(E.event[0], example_list[j])
     else:
-        print(E.num_events)
         for i in range(E.num_events):
             print(E.event[i], E.events_data[i])
             parse_event_header_string(E.event[i], E.event_headers[i])
             # parse_event_list(E.event[i], E.events_data[i])
-S.print_out()
+# S.print_out()
 
 # S=ExampleSet("train", "train4.ex", 1,0,1,0)
 # file_str = read_in_file(S, "train4.ex")
