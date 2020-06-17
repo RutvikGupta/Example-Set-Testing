@@ -152,6 +152,7 @@ class Example:
     events_data = []
     event_headers = []
     proc = None
+    active_events = []
 
     # proc function is defined in the C macros
 
@@ -161,6 +162,7 @@ class Example:
         self.event = []
         self.events_data = []
         self.event_headers = []
+        self.active_events = []
 
         # initExampleExtension(E)
 
@@ -448,7 +450,10 @@ def parse_event_header_string(event: Event, event_header: str):
                     value = element[colon_index + 2:].strip()
                 else:
                     value = element[colon_index + 1:].strip()
-                assign_field_values(lookup_string, event.example.set, value, "Event", event)
+                if element.isdigit():
+                    event.example.active_events.append(int(element))
+                else:
+                    assign_field_values(lookup_string, event.example.set, value, "Event", event)
                 break
     return True
 
@@ -530,7 +535,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
         # example_list[j] = ignore_commented_lines(example_list[j])
         example_list[j] = parse_example_arguments(E, example_list[j])
         parse_example_string(E, example_list[j])
-        if E.events_data != [] and E.events_data[0] == "":
+        if E.num_events > 1 and E.events_data[0] == "":
             E.events_data.pop(0)
         for _ in range(E.num_events):
             new_event = Event(E)
@@ -690,7 +695,7 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    S = ExampleSet("XOR", "xor_dense.ex", 0, 1, 0, 1)
+    S = ExampleSet("XOR", "xor_dense.ex.ex", 0, 1, 0, 1)
     read_in_file(S, "xor_dense.ex")
     # S = ExampleSet("train", "train4.ex", 0, 1, 0, 1)
     # read_in_file(S, "train4.ex")
