@@ -59,6 +59,8 @@ class ExampleSet:
     :type DEF_S_active_target: int
     :param file_name:
     :type file_name: str
+    :param file_str: string representation of the raw file
+    :type file_str: str
     """
     name: str
     num: int
@@ -114,6 +116,10 @@ class ExampleSet:
         self.num_events = 0
         self.example = []
         self.file_name = file_name
+        # read_in_file(self, file_name)
+
+    def print_out(self):
+        print_out_example_set(self)
 
 
 class Example:
@@ -158,6 +164,8 @@ class Example:
 
         # initExampleExtension(E)
 
+    def print_out(self):
+        print_out_example(self)
 
 class Event:
     """Event class. Consist of information related to one event of the Example object
@@ -219,6 +227,8 @@ class Event:
         self.target_group = []
         # initEventExtension(V)
 
+    def print_out(self):
+        print_out_event(self)
 
 class UnitGroup:
     """It stores information related to the inputs and targets of event of event class.
@@ -316,9 +326,10 @@ def parse_event_list(event: Event, event_list: str):
     """
     event_list = event_list.strip()
     inp_tar_lst = re.split("[IT]:", event_list)
+    inp_tar_lst = re.split("[IT]:", event_list)
     # separates by letter (dense only) and removes the first value
     # because it's the description and does not contain data
-    inp_tar_lst.pop(0)
+    # inp_tar_lst.pop(0)
     # event_dict is a set of key-value pairs with letter keys and list of numbers value
     event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
 
@@ -343,21 +354,24 @@ def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type:
         obj = event
     else:
         obj = S
-    p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
+    # p = re.compile("([0-9]+\.[0-9]+)|[0-9]+")
+    p = re.compile("([0-9]+\.[0-9]+)")
+    print(value)
     if lookup_string == "proc:":
         obj.proc = value
     elif lookup_string == "min:":
         if p.match(value):
-            obj.min_time = float(value)
+            obj.min_time = float(value[0:-1])
+            # remove the last piece, which is space or "]"
         elif value == "-":
             obj.min_time = None
         else:
             return parseError(S, "missing value after \"min:\" in " + obj_type + " header")
     elif lookup_string == "max:":
         if p.match(value):
-            obj.min_time = float(value)
+            obj.max_time = float(value)
         elif value == "-":
-            obj.min_time = None
+            obj.max_time = None
         else:
             return parseError(S, "missing value after \"max:\" in " + obj_type + " header")
     elif lookup_string == "grace:":
@@ -394,7 +408,7 @@ def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type:
         elif value == "-":
             obj.active_target = None
         else:
-            parseError(S, "missing value after \"actT:\" in " + obj_type + " header")
+            return parseError(S, "missing value after \"actT:\" in " + obj_type + " header")
 
 
 def parse_example_set_header_string(S: ExampleSet, example_header: str):
@@ -494,15 +508,19 @@ def read_example(S: ExampleSet, example_list: List[str]):
     :type example_list: List[str]
     """
     example_list.pop()
-    header_string = example_list[0]
-    header_string = parse_example_set_header_string(S, header_string)
-    if header_string.strip() == '':
-        example_list.pop(0)
+
+    #
+    # header_string = example_list[0]
+    # header_string = parse_example_set_header_string(S, header_string)
+    # if header_string.strip() == '':
+    #     example_list.pop(0)
+
+    # if header is empty then remove header
     S.num_examples = len(example_list)
     for j in range(S.num_examples):
         E = Example(S)
         register_example(E, S)
-        example_list[j] = ignore_commented_lines(example_list[j])
+        # example_list[j] = ignore_commented_lines(example_list[j])
         example_list[j] = parse_example_arguments(E, example_list[j])
         parse_example_string(E, example_list[j])
         for _ in range(E.num_events):
@@ -513,7 +531,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
         else:
             for i in range(E.num_events):
                 parse_event_header_string(E.event[i], E.event_headers[i])
-                parse_event_list(E.event[i], E.events_data[i])
+                # parse_event_list(E.event[i], E.events_data[i])
 
 
 def register_example(E: Example, S: ExampleSet):
@@ -547,7 +565,8 @@ def read_in_file(S: ExampleSet, name: str):
     # open file as string f
     f = open(name)
     # split file by ";"
-    split_list = f.read().split(";")
+    S.file_str = f.read()
+    split_list = ignore_commented_lines(S.file_str).split(";")
     example_list = []
     for e in split_list:
         example_list.append(e.strip())
@@ -662,8 +681,8 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    S = ExampleSet("XOR", "train4.ex", 0, 1, 0, 1)
-    read_in_file(S, "train4.ex")
+    S = ExampleSet("XOR", "xor_dense.ex", 0, 1, 0, 1)
+    read_in_file(S, "xor_dense.ex")
     print_out_example_set(S)
     print_out_example(S.first_example)
     print_out_event(S.first_example.event[0])
