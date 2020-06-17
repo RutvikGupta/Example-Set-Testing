@@ -167,6 +167,7 @@ class Example:
     def print_out(self):
         print_out_example(self)
 
+
 class Event:
     """Event class. Consist of information related to one event of the Example object
     and has UnitGroup object as inputs and targets
@@ -230,6 +231,7 @@ class Event:
     def print_out(self):
         print_out_event(self)
 
+
 class UnitGroup:
     """It stores information related to the inputs and targets of event of event class.
     It can be target OR input based on the variable doing_inputs.
@@ -270,7 +272,7 @@ class UnitGroup:
         self.group = np.array([])
         self.num_units = num_units
 
-    def add_units(self, doing_inputs: bool, unit_value: int):
+    def add_units(self, doing_inputs: bool, unit_value=None):
         """ Add unit_value to the group. If unit_value is not given, then a default value
         will be added instead: adds default_input if doing_inputs is true, or else
         adds default_target.
@@ -280,7 +282,7 @@ class UnitGroup:
         :param unit_value: value of the unit to be added to group
         :type unit_value: int
         """
-        if unit_value:  # if value is not given, use default
+        if unit_value is not None:  # if value is not given, use default
             self.group = np.append(self.group, [unit_value])
         else:
             if doing_inputs:  # if the Range is an input
@@ -324,29 +326,32 @@ def parse_event_list(event: Event, event_list: str):
     :return: false if an error is found
     "rtype: optional, false
     """
-    event_list = event_list.strip()
-    inp_tar_lst = re.split("[IT]:", event_list)
-    inp_tar_lst = re.split("[IT]:", event_list)
+    event_string = event_list.strip()
+    inp_tar_lst = re.split("[IT]:", event_string)
+    inp_tar_lst.pop(0)
     # separates by letter (dense only) and removes the first value
     # because it's the description and does not contain data
-    # inp_tar_lst.pop(0)
     # event_dict is a set of key-value pairs with letter keys and list of numbers value
-    event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
+    if "I" and "T" in event_string:
+        event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
+    elif "I" in event_string:
+        event_dict = {"I": inp_tar_lst[0].split()}
+    else:
+        event_dict = {"T": inp_tar_lst[0].split()}
 
-    Input_group = UnitGroup(event, True, len(event_dict["I"]), "Input")
-    Target_group = UnitGroup(event, False, len(event_dict["T"]), "Target")
+    if "I" in event_dict:
+        Input_group = UnitGroup(event, True, len(event_dict["I"]), "Input")
+        for i in range(len(event_dict["I"])):
+            Input_group.add_units(True, int(event_dict["I"][i]))
+        if Input_group.check_units_size(True) is False:
+            return parseError(event.example.set, "Too many units")
+    if "T" in event_dict:
+        Target_group = UnitGroup(event, False, len(event_dict["T"]), "Target")
+        for i in range(len(event_dict["T"])):
+            Target_group.add_units(False, int(event_dict["T"][i]))
 
-    for i in range(len(event_dict["I"])):
-        Input_group.add_units(True, int(event_dict["I"][i]))
-
-    if Input_group.check_units_size(True) is False:
-        return parseError(event.example.set, "Too many units")
-
-    for i in range(len(event_dict["T"])):
-        Target_group.add_units(False, int(event_dict["T"][i]))
-
-    if Target_group.check_units_size(False) is False:
-        return parseError(event.example.set, "Too many units")
+        if Target_group.check_units_size(False) is False:
+            return parseError(event.example.set, "Too many units")
 
 
 def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type: str, event=None):
@@ -494,7 +499,7 @@ def parse_example_arguments(E: Example, example_array: str):
     if matched is not None:
         start = matched.start()
         end = matched.end()
-        num = example_array[start + 1: end]
+        num = example_array[start: end].strip()
         if num.isdigit():
             E.num_events = int(num)
             example_array = example_array.replace(example_array[start: end], '')
@@ -513,8 +518,8 @@ def read_example(S: ExampleSet, example_list: List[str]):
     """
     example_list.pop()
     header_string = example_list[0]
-    header_string = parse_example_set_header_string(S, header_string)
-    if header_string.strip() == '':
+    example_list[0] = parse_example_set_header_string(S, header_string)
+    if example_list[0].strip() == '':
         example_list.pop(0)
 
     # if header is empty then remove header
@@ -525,6 +530,8 @@ def read_example(S: ExampleSet, example_list: List[str]):
         # example_list[j] = ignore_commented_lines(example_list[j])
         example_list[j] = parse_example_arguments(E, example_list[j])
         parse_example_string(E, example_list[j])
+        E.events_data.pop(0)
+
         for _ in range(E.num_events):
             new_event = Event(E)
             E.event.append(new_event)
