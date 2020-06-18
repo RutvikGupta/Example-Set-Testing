@@ -1,7 +1,9 @@
+import copy
 from typing import List
 from python import example_defaults
 import re
 import numpy as np
+import random
 
 class ExampleSet:
     """ExampleSet Object. Stores a set of examples with similar properties
@@ -24,6 +26,8 @@ class ExampleSet:
     :type example: List[Example]
     :param permuted:
     :type permuted: List[Example]
+    :param example_sel: list of examples but sorted by current selection mode
+    :type example_sel: List[Example]
     :param selfent_example_num:
     :type selfent_example_num: int
     :param selfent_example:
@@ -72,6 +76,7 @@ class ExampleSet:
 
     example = []  #: List[Example]  list of examples
     permuted = []  #: List[Example]
+    example_sel = []
     selfent_example_num: int
     selfent_example = None  #: Example
     first_example = None  #: Example
@@ -121,6 +126,85 @@ class ExampleSet:
         self.file_name = file_name
         self.network = network
         read_in_file(self, file_name)
+
+    def sort_examples_by_mode(self, mode: str):
+        """ Fills self.example_sel, which is the list of examples but sorted by mode.
+
+        In ORDERED mode, which is the default, examples will be presented in the order in
+        which they were found in the example file.
+
+        In RANDOMIZED mode, examples will be selected at random with replacement,
+        each having the same probability of selection. Note that this differs from
+        PERMUTED because it uses replacement. It differs from PROBABILISTIC because it
+        ignores the example frequency.
+
+        In PERMUTED mode, examples will be selected at random without replacement,
+        each having the same probability of selection. A different order will be
+        computed for each pass through the set.
+
+        In PROBABILISTIC mode, examples are selected based on their given frequency.
+        Specified frequency values will be normalized over all examples and this
+        distribution used for selection. If example sets are concatenated, the distribution
+        will be recalculated based on the specified frequencies. An example with no
+        frequency specified is given a value of 1.0.
+
+        PIPE mode is used for example sets that are reading from a pipe. The next example
+        will be read from the pipe and stored temporarily in the example set's pipeExample
+        field. This mode can only be used with example sets for which a pipe was opened
+        with "loadExamples ... -m PIPE". If the pipe is exhausted and the example set's
+        pipeLoop flag is set to TRUE, which is the default, the pipe will be re-opened
+        automatically. If an example set contains both stored examples and an open pipe,
+        you can switch between them by changing from PIPE mode to another mode.
+
+        CUSTOM mode allows you to write a procedure that generates the index of the next example. When it's time to choose the next example, the example set's chooseExample procedure will be called. This should return an integer between 0 and one less than the number of examples, inclusive.
+        :param mode:
+        :return:
+        """
+        mode = mode.upper()
+        if mode == "ORDERED":
+            self.example_sel = self.example
+        elif mode == "RANDOMIZED":
+            for _ in range(self.num_examples):
+                e = random.choice(self.example)
+                self.example_sel.append(e)
+                register_example(e, self)
+        elif mode == "PERMUTED":
+            example_copy = copy.copy(self.example)
+            for _ in range(self.num_examples):
+                e = example_copy.pop(random.randint(0, len(example_copy)-1))
+                self.example_sel.append(e)
+                register_example(e, self)
+        elif mode == "PROBABILISTIC":
+            total_freq = 0.0
+            freq_cum = [0.0]
+            # cumulative frequency of all previous examples parsed. the greater the frequency
+            # of an example, the greater the increment over the previous value.
+            for e in self.example:
+                if isinstance(e.frequency, float):
+                    total_freq += e.frequency
+                else:
+                    total_freq += 0.0
+                freq_cum.append(total_freq)
+            for _ in range(self.num_examples):
+                random_choice = random.random() * total_freq
+                example_index = 0
+                while freq_cum[example_index+1] < random_choice:
+                    example_index+=1
+                e = self.example[example_index]
+                self.example_sel.append(e)
+                register_example(e, self)
+        elif mode == "PIPE":
+            #TODO
+            pass
+        elif mode == "CUSTOM":
+            #TODO
+            pass
+        else:
+            return parseError(self, "invalid example selection mode")
+
+        if self.num_examples > 0:
+            self.first_example = self.example_sel[0]
+            self.last_example = self.example_sel[-1]
 
     def print_out(self):
         print_out_example_set(self)
@@ -782,3 +866,42 @@ if __name__ == "__main__":
     for file in works_lst_ex:
         path = "../example_files/" + file + ".ex"
         ExampleSet(None, file, path, 0,1,0,1).print_out()
+
+
+
+    for i in range(10):
+        train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
+        train4.sort_examples_by_mode("PERMUTED")
+        f = copy.copy(train4.first_example)
+        s="test permutation on train4.ex "
+        s+= f.name
+        f=f.next
+        while f is not None:
+            s+= " -> " + f.name
+            f=f.next
+        print(s)
+
+    for i in range(10):
+        train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
+        train4.sort_examples_by_mode("RANDOM")
+        f = copy.copy(train4.first_example)
+        s="test random on train4.ex "
+        s+= f.name
+        f=f.next
+        while f is not None:
+            s+= " -> " + f.name
+            f=f.next
+        print(s)
+
+    for i in range(10):
+        train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
+        train4.sort_examples_by_mode("PROBABILISTIC")
+        f = copy.copy(train4.first_example)
+        s="test probabilistic on train4.ex "
+        s+= f.name
+        f=f.next
+        while f is not None:
+            s+= " -> " + f.name
+            f=f.next
+        print(s)
+
