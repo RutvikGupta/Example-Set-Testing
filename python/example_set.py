@@ -168,13 +168,13 @@ class ExampleSet:
             for _ in range(self.num_examples):
                 e = random.choice(self.example)
                 self.example_sel.append(e)
-                register_example(e, self, False)
+                # register_example(e, self, False)
         elif mode == "PERMUTED":
             example_copy = copy.copy(self.example)
             for _ in range(self.num_examples):
                 e = example_copy.pop(random.randint(0, len(example_copy) - 1))
                 self.example_sel.append(e)
-                register_example(e, self, False)
+                # register_example(e, self, False)
         elif mode == "PROBABILISTIC":
             total_freq = 0.0
             freq_cum = [0.0]
@@ -193,7 +193,7 @@ class ExampleSet:
                     example_index += 1
                 e = self.example[example_index]
                 self.example_sel.append(e)
-                register_example(e, self, False)
+                # register_example(e, self, False)
         elif mode == "PIPE":
             # TODO
             pass
@@ -203,9 +203,9 @@ class ExampleSet:
         else:
             return parseError(self, "invalid example selection mode")
 
-        if self.num_examples > 0:
-            self.first_example = self.example_sel[0]
-            self.last_example = self.example_sel[-1]
+        # if self.num_examples > 0:
+        #     self.first_example = self.example_sel[0]
+        #     self.last_example = self.example_sel[-1]
 
     def print_out(self):
         print_out_example_set(self)
