@@ -3,7 +3,6 @@ from python import example_defaults
 import re
 import numpy as np
 
-
 class ExampleSet:
     """ExampleSet Object. Stores a set of examples with similar properties
     on which the neural network will be trained on.
@@ -61,6 +60,8 @@ class ExampleSet:
     :type file_name: str
     :param file_str: string representation of the raw file
     :type file_str: str
+    :param network: network that this example set belongs to
+    :type network: Network
     """
     name: str
     num: int
@@ -94,8 +95,10 @@ class ExampleSet:
     DEF_S_default_target: int
     DEF_S_active_target: int
     file_name: str
+    network: None # Network class object
 
-    def __init__(self, name: str, file_name: str, default_input: int, active_input: int, default_target: int,
+
+    def __init__(self, network: None, name: str, file_name: str, default_input: int, active_input: int, default_target: int,
                  active_target: int, def_s_pipe_loop=example_defaults.DEF_S_pipeLoop,
                  def_s_max_time=example_defaults.DEF_S_maxTime, def_s_min_time=example_defaults.DEF_S_minTime,
                  def_s_grace_time=example_defaults.DEF_S_graceTime):
@@ -116,6 +119,7 @@ class ExampleSet:
         self.num_events = 0
         self.example = []
         self.file_name = file_name
+        self.network = network
         read_in_file(self, file_name)
 
     def print_out(self):
@@ -771,9 +775,10 @@ if __name__ == "__main__":
 
     # works for the following .ex files from example_files folder!
     # but might have incorrect UnitGroup values :p
+    # mark examples folder as sources root
     works_lst_ex = ["xor_dense", "bench", "digits", "digits2", "encoder.dense",
                  "kohonen", "negation", "on-off", "on-off2", "rand10x40", "recoder",
                     "rhw-sequence.trn", "sequence", "train4"]
     for file in works_lst_ex:
         path = "../example_files/" + file + ".ex"
-        ExampleSet(file, path, 0,1,0,1).print_out()
+        ExampleSet(None, file, path, 0,1,0,1).print_out()
