@@ -116,7 +116,7 @@ class ExampleSet:
         self.num_events = 0
         self.example = []
         self.file_name = file_name
-        # read_in_file(self, file_name)
+        read_in_file(self, file_name)
 
     def print_out(self):
         print_out_example_set(self)
@@ -327,17 +327,37 @@ def parse_event_list(event: Event, event_list: str):
     "rtype: optional, false
     """
     event_string = event_list.strip()
-    inp_tar_lst = re.split("[IT]:", event_string)
+    inp_tar_lst = re.split("[ITB]:", event_string)
     inp_tar_lst.pop(0)
     # separates by letter (dense only) and removes the first value
     # because it's the description and does not contain data
     # event_dict is a set of key-value pairs with letter keys and list of numbers value
-    if "I" and "T" in event_string:
-        event_dict = {"I": inp_tar_lst[0].split(), "T": inp_tar_lst[1].split()}
-    elif "I" in event_string:
-        event_dict = {"I": inp_tar_lst[0].split()}
-    else:
-        event_dict = {"T": inp_tar_lst[0].split()}
+    event_dict = {}
+
+    # if len(inp_tar_lst) == 3:
+    #     event_dict["I"] = inp_tar_lst[0].split()
+    #     event_dict["T"] = inp_tar_lst[1].split()
+    #     event_dict["B"] = inp_tar_lst[2].split()
+    # else:
+    i = 0
+    for type in ["I", "T", "B"]:
+        if type in event_string:
+            event_dict[type] = inp_tar_lst[i].split()
+            i += 1
+    #         doing_inputs = False
+    #         if type == "I":
+    #             name = "Input"
+    #             doing_inputs = True
+    #         if type == "T":
+    #             name = "Target"
+    #         if type == "B":
+    #             name = "B..."
+    #         Input_group = UnitGroup(event, doing_inputs, len(event_dict[type]), name)
+    #         for i in range(len(event_dict[type])):
+    #             Input_group.add_units(True, int(event_dict[type][i]))
+    #         if not Input_group.check_units_size(True):
+    #             return parseError(event.example.set, "Too many units")
+    # # for type in ["I", "T", "B"]:
 
     if "I" in event_dict:
         Input_group = UnitGroup(event, True, len(event_dict["I"]), "Input")
@@ -349,12 +369,31 @@ def parse_event_list(event: Event, event_list: str):
         Target_group = UnitGroup(event, False, len(event_dict["T"]), "Target")
         for i in range(len(event_dict["T"])):
             Target_group.add_units(False, int(event_dict["T"][i]))
-
+        if Target_group.check_units_size(False) is False:
+            return parseError(event.example.set, "Too many units")
+    if "B" in event_dict:
+        Target_group = UnitGroup(event, False, len(event_dict["B"]), "B...")
+        for i in range(len(event_dict["B"])):
+            Target_group.add_units(False, int(event_dict["B"][i]))
         if Target_group.check_units_size(False) is False:
             return parseError(event.example.set, "Too many units")
 
-
 def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type: str, event=None):
+    """ Set the field value value of type proc, min, max, grace, defI, defT, actI, actT to their
+    respective instance attributes in Event S; if Event is None then assign to ExampleSet S
+
+    :param lookup_string: could be proc, min, max, grace, defI, defT, actI, actT
+    :type lookup_string: str
+    :param S:
+    :type S: ExampleSet
+    :param value:
+    :type value: str
+    :param obj_type:
+    :type obj_type: str
+    :param event:
+    :type event: Optional[None, Event]
+    :return: Optional error
+    """
     if (event is not None) and (type(event) is Event):
         obj = event
     else:
@@ -366,7 +405,7 @@ def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type:
         obj.proc = value
     elif lookup_string == "min:":
         if p.match(value):
-            obj.min_time = float(value[0:-1])
+            obj.min_time = float(value)
             # remove the last piece, which is space or "]"
         elif value == "-":
             obj.min_time = None
@@ -417,6 +456,14 @@ def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type:
 
 
 def parse_example_set_header_string(S: ExampleSet, example_header: str):
+    """ Parse through example_header substring and assign the values to S using lookup_list
+
+     :param S: ExampleSet to which the values will be stored
+     :type S: ExampleSet
+     :param example_header: substring of the example set file representing an example set header
+     :type example_header: str
+     :return:
+     """
     square_index = float("inf")
     if "[" in example_header:
         square_index = example_header.find("[")
@@ -434,6 +481,14 @@ def parse_example_set_header_string(S: ExampleSet, example_header: str):
 
 
 def parse_event_header_string(event: Event, event_header: str):
+    """ Parse through event_header substring and assign the values to event using lookup_list
+
+    :param event: Event to which the values will be stored
+    :type event: Event
+    :param event_header: substring of the example set file representing an event header
+    :type event_header: str
+    :return:
+    """
     delimiters = re.findall(r'[0-9]\s', event_header)
     event_header_list = re.split(r'[0-9]\s', event_header)
     for i in range(len(delimiters)):
@@ -454,6 +509,11 @@ def parse_event_header_string(event: Event, event_header: str):
 
 
 def ignore_commented_lines(example_array: str):
+    """
+    Returns new example_array where all text between "#" and the next new line are removed
+    :param example_array:
+    :return:
+    """
     while '#' in example_array:
         index = example_array.find("#")
         find_newline = example_array[index:].find("\n") + index
@@ -462,6 +522,14 @@ def ignore_commented_lines(example_array: str):
 
 
 def parse_example_string(E: Example, example_array: str):
+    """ Sorts the string of an Example, example_array, into event headers and event dada
+
+    :param E: Reads the string example_array into this Example
+    :type E: Example
+    :param example_array: The string of an Example
+    :type example_array: str
+    :return:
+    """
     E.event_headers = re.findall(r'\[(.+)\]', example_array)
     if len(E.event_headers) == 0:
         E.num_events = 1
@@ -470,7 +538,17 @@ def parse_example_string(E: Example, example_array: str):
         E.events_data = re.split(r'\[.+\]', example_array)
 
 
-def parse_example_arguments(E: Example, example_array: str):
+def parse_example_arguments(E: Example, example_array: str) -> str:
+    """ Parse through example_array to find Example arguments and set the values
+    in Example accordingly
+
+    :param E:
+    :type E: Example
+    :param example_array:
+    :type example_array:
+    :return: new example array after the parsed parameters are removed
+    """
+
     if "name:" in example_array:
         index = example_array.find("name:")
         find_newline = example_array[index:].find("\n") + index
@@ -513,7 +591,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
 
     :param S: the ExampleSet where we add the example
     :type S: ExampleSet
-    :param example_list: a substring of the .ex file representing an example. Examples are separated by semicolon ; .
+    :param example_list: a substring of the .ex file representing an example. example_files are separated by semicolon ; .
     :type example_list: List[str]
     """
     example_list.pop()
@@ -590,7 +668,7 @@ def parseError(S: ExampleSet, fmt: str) -> bool:
 
 
 def print_out_example_set(S: ExampleSet):
-    """ Prints out the instance variables of an ExampleSet and of its Examples.
+    """ Prints out the instance variables of an ExampleSet and of its example_files.
     This function is a work in progress for testing purposes.
     Each new layer of composition is indicated by indent.
 
@@ -690,8 +768,12 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    S = ExampleSet("XOR", "xor_dense.ex", 0, 1, 0, 1)
-    read_in_file(S, "xor_dense.ex")
-    # S = ExampleSet("train", "train4.ex", 0, 1, 0, 1)
-    # read_in_file(S, "train4.ex")
-    S.print_out()
+
+    # works for the following .ex files from example_files folder!
+    # but might have incorrect UnitGroup values :p
+    works_lst_ex = ["xor_dense", "bench", "digits", "digits2", "encoder.dense",
+                 "kohonen", "negation", "on-off", "on-off2", "rand10x40", "recoder",
+                    "rhw-sequence.trn", "sequence", "train4"]
+    for file in works_lst_ex:
+        path = "../example_files/" + file + ".ex"
+        ExampleSet(file, path, 0,1,0,1).print_out()

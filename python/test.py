@@ -1,6 +1,6 @@
 import re
 import numpy as np
-from xor_example import *
+from example_set import *
 
 #
 # f = open("train4.ex", "r")
