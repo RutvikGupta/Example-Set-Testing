@@ -80,3 +80,41 @@ print(inp_tar_lst)
 # print(a.reshape((5, 2)))
 # b = np.zeros((5, 5))
 # print(b)
+
+
+#Selection part testing
+# for i in range(10):
+#     train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
+#     train4.sort_examples_by_mode("PERMUTED")
+#     f = copy.copy(train4.first_example)
+#     s = "test permutation on train4.ex "
+#     s += f.name
+#     f = f.next
+#     while f is not None:
+#         s += " -> " + f.name
+#         f = f.next
+#     print(s)
+#
+# for i in range(10):
+#     train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
+#     train4.sort_examples_by_mode("RANDOMIZED")
+#     f = copy.copy(train4.first_example)
+#     s = "test random on train4.ex "
+#     s += f.name
+#     f = f.next
+#     while f is not None:
+#         s += " -> " + f.name
+#         f = f.next
+#     print(s)
+#
+# for i in range(10):
+#     train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
+#     train4.sort_examples_by_mode("PROBABILISTIC")
+#     f = copy.copy(train4.first_example)
+#     s = "test probabilistic on train4.ex "
+#     s += f.name
+#     f = f.next
+#     while f is not None:
+#         s += " -> " + f.name
+#         f = f.next
+#     print(s)

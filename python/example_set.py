@@ -5,6 +5,7 @@ import re
 import numpy as np
 import random
 
+
 class ExampleSet:
     """ExampleSet Object. Stores a set of examples with similar properties
     on which the neural network will be trained on.
@@ -77,8 +78,6 @@ class ExampleSet:
     example = []  #: List[Example]  list of examples
     permuted = []  #: List[Example]
     example_sel = []
-    selfent_example_num: int
-    selfent_example = None  #: Example
     first_example = None  #: Example
     last_example = None  #: Example
     # Tcl_Obj defined in C macro in example.h
@@ -100,10 +99,10 @@ class ExampleSet:
     DEF_S_default_target: int
     DEF_S_active_target: int
     file_name: str
-    network: None # Network class object
+    network: None  # Network class object
 
-
-    def __init__(self, network: None, name: str, file_name: str, default_input: int, active_input: int, default_target: int,
+    def __init__(self, network: None, name: str, file_name: str, default_input: int, active_input: int,
+                 default_target: int,
                  active_target: int, def_s_pipe_loop=example_defaults.DEF_S_pipeLoop,
                  def_s_max_time=example_defaults.DEF_S_maxTime, def_s_min_time=example_defaults.DEF_S_minTime,
                  def_s_grace_time=example_defaults.DEF_S_graceTime):
@@ -156,7 +155,9 @@ class ExampleSet:
         automatically. If an example set contains both stored examples and an open pipe,
         you can switch between them by changing from PIPE mode to another mode.
 
-        CUSTOM mode allows you to write a procedure that generates the index of the next example. When it's time to choose the next example, the example set's chooseExample procedure will be called. This should return an integer between 0 and one less than the number of examples, inclusive.
+        CUSTOM mode allows you to write a procedure that generates the index of the next example. When it's time to
+        choose the next example, the example set's chooseExample procedure will be called. This should return an integer
+         between 0 and one less than the number of examples, inclusive.
         :param mode:
         :return:
         """
@@ -171,7 +172,7 @@ class ExampleSet:
         elif mode == "PERMUTED":
             example_copy = copy.copy(self.example)
             for _ in range(self.num_examples):
-                e = example_copy.pop(random.randint(0, len(example_copy)-1))
+                e = example_copy.pop(random.randint(0, len(example_copy) - 1))
                 self.example_sel.append(e)
                 register_example(e, self, False)
         elif mode == "PROBABILISTIC":
@@ -188,16 +189,16 @@ class ExampleSet:
             for _ in range(self.num_examples):
                 random_choice = random.random() * total_freq
                 example_index = 0
-                while freq_cum[example_index+1] < random_choice:
-                    example_index+=1
+                while freq_cum[example_index + 1] < random_choice:
+                    example_index += 1
                 e = self.example[example_index]
                 self.example_sel.append(e)
                 register_example(e, self, False)
         elif mode == "PIPE":
-            #TODO
+            # TODO
             pass
         elif mode == "CUSTOM":
-            #TODO
+            # TODO
             pass
         else:
             return parseError(self, "invalid example selection mode")
@@ -415,37 +416,17 @@ def parse_event_list(event: Event, event_list: str):
     "rtype: optional, false
     """
     event_string = event_list.strip()
-    inp_tar_lst = re.split("[ITB]:", event_string)
+    inp_tar_lst = re.split("[IT]:", event_string)
     inp_tar_lst.pop(0)
     # separates by letter (dense only) and removes the first value
     # because it's the description and does not contain data
     # event_dict is a set of key-value pairs with letter keys and list of numbers value
     event_dict = {}
-
-    # if len(inp_tar_lst) == 3:
-    #     event_dict["I"] = inp_tar_lst[0].split()
-    #     event_dict["T"] = inp_tar_lst[1].split()
-    #     event_dict["B"] = inp_tar_lst[2].split()
-    # else:
     i = 0
-    for type in ["I", "T", "B"]:
-        if type in event_string:
-            event_dict[type] = inp_tar_lst[i].split()
+    for unit_type in ["I", "T", "B"]:
+        if unit_type in event_string:
+            event_dict[unit_type] = inp_tar_lst[i].split()
             i += 1
-    #         doing_inputs = False
-    #         if type == "I":
-    #             name = "Input"
-    #             doing_inputs = True
-    #         if type == "T":
-    #             name = "Target"
-    #         if type == "B":
-    #             name = "B..."
-    #         Input_group = UnitGroup(event, doing_inputs, len(event_dict[type]), name)
-    #         for i in range(len(event_dict[type])):
-    #             Input_group.add_units(True, int(event_dict[type][i]))
-    #         if not Input_group.check_units_size(True):
-    #             return parseError(event.example.set, "Too many units")
-    # # for type in ["I", "T", "B"]:
 
     if "I" in event_dict:
         Input_group = UnitGroup(event, True, len(event_dict["I"]), "Input")
@@ -453,18 +434,27 @@ def parse_event_list(event: Event, event_list: str):
             Input_group.add_units(True, int(event_dict["I"][i]))
         if Input_group.check_units_size(True) is False:
             return parseError(event.example.set, "Too many units")
+
     if "T" in event_dict:
         Target_group = UnitGroup(event, False, len(event_dict["T"]), "Target")
         for i in range(len(event_dict["T"])):
             Target_group.add_units(False, int(event_dict["T"][i]))
         if Target_group.check_units_size(False) is False:
             return parseError(event.example.set, "Too many units")
+
     if "B" in event_dict:
-        Target_group = UnitGroup(event, False, len(event_dict["B"]), "B...")
+        Input_group = UnitGroup(event, True, len(event_dict["B"]), "Input")
+        Target_group = UnitGroup(event, False, len(event_dict["B"]), "Target")
         for i in range(len(event_dict["B"])):
+            Input_group.add_units(True, int(event_dict["B"][i]))
             Target_group.add_units(False, int(event_dict["B"][i]))
+
+        if Input_group.check_units_size(True) is False:
+            return parseError(event.example.set, "Too many units")
+
         if Target_group.check_units_size(False) is False:
             return parseError(event.example.set, "Too many units")
+
 
 def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type: str, event=None):
     """ Set the field value value of type proc, min, max, grace, defI, defT, actI, actT to their
@@ -857,52 +847,8 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-
-    # works for the following .ex files from example_files folder!
-    # but might have incorrect UnitGroup values :p
-    # mark examples folder as sources root
     works_lst_ex = ["xor_dense", "bench", "digits", "digits2", "encoder.dense",
-                 "kohonen", "negation", "on-off", "on-off2", "rand10x40", "recoder",
+                    "kohonen", "negation", "on-off", "on-off2", "rand10x40", "recoder",
                     "rhw-sequence.trn", "sequence", "train4"]
-    for file in works_lst_ex:
-        path = "../example_files/" + file + ".ex"
-        ExampleSet(None, file, path, 0,1,0,1).print_out()
 
-
-
-    for i in range(10):
-        train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
-        train4.sort_examples_by_mode("PERMUTED")
-        f = copy.copy(train4.first_example)
-        s="test permutation on train4.ex "
-        s+= f.name
-        f=f.next
-        while f is not None:
-            s+= " -> " + f.name
-            f=f.next
-        print(s)
-
-    for i in range(10):
-        train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
-        train4.sort_examples_by_mode("RANDOMIZED")
-        f = copy.copy(train4.first_example)
-        s="test random on train4.ex "
-        s+= f.name
-        f=f.next
-        while f is not None:
-            s+= " -> " + f.name
-            f=f.next
-        print(s)
-
-    for i in range(10):
-        train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
-        train4.sort_examples_by_mode("PROBABILISTIC")
-        f = copy.copy(train4.first_example)
-        s="test probabilistic on train4.ex "
-        s+= f.name
-        f=f.next
-        while f is not None:
-            s+= " -> " + f.name
-            f=f.next
-        print(s)
-
+    ExampleSet(None, "train4.ex", "train4.ex", 0, 1, 0, 1).print_out()
