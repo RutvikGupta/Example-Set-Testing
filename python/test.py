@@ -1,26 +1,24 @@
 import re
 import numpy as np
-from example_set import *
+#
+f = open("train4.ex", "r")
 
-#
-# f = open("train4.ex", "r")
-#
-# list = f.read().split(";")
-# print(list)
-# # f2 = open("scratch.txt", "r")
-# # list2 = f2.read().split(";")
-# # print(list2)
-# a = []
-# for i in list:
-#     a.append(i.strip())
-#
-# print(a)
-# element = a[0]
-# print(re.findall(r'\[(.+)\]', element))
-# lst = re.split(r'\[.+\]', element)
-# print(lst)
-# inp_tar_lst = re.split("[IT]:", lst[1])
-# print(inp_tar_lst)
+list = f.read().split(";")
+print(list)
+# f2 = open("scratch.txt", "r")
+# list2 = f2.read().split(";")
+# print(list2)
+a = []
+for i in list:
+    a.append(i.strip())
+
+print(a)
+element = a[0]
+print(re.findall(r'\[(.+)\]', element))
+lst = re.split(r'\[.+\]', element)
+print(lst)
+inp_tar_lst = re.split("[IT]:", lst[1])
+print(inp_tar_lst)
 
 #
 # def ignore_commented_lines(example_array: str):
@@ -34,47 +32,7 @@ from example_set import *
 #
 # lst[1] = ignore_commented_lines(lst[1])
 # print(lst)
-#
-
-
-
-S=ExampleSet("train", "train4.ex", 1,0,1,0)
-f = open("train4.ex")
-# split file by ";"
-S.file_str = f.read()
-print(S.file_str.split(";"))
-split_list = ignore_commented_lines(S.file_str).split(";")
-example_list = []
-for e in split_list:
-    example_list.append(e.strip())
-print(split_list)
-print(example_list)
-example_list.pop()
-print("header string")
-header_string = example_list[0]
-header_string = parse_example_set_header_string(S, header_string)
-if header_string.strip() == '':
-    example_list.pop(0)
-
-S.num_examples = len(example_list)
-for j in range(S.num_examples):
-    E = Example(S)
-    register_example(E, S)
-    # example_list[j] = ignore_commented_lines(example_list[j])
-    example_list[j] = parse_example_arguments(E, example_list[j])
-    print("example list[j]")
-    print(example_list[j])
-    parse_example_string(E, example_list[j])
-    for _ in range(E.num_events):
-        new_event = Event(E)
-        E.event.append(new_event)
-    if E.num_events == 1:
-        parse_event_list(E.event[0], example_list[j])
-    else:
-        for i in range(E.num_events):
-            print(E.event[i], E.events_data[i])
-            parse_event_header_string(E.event[i], E.event_headers[i])
-            # parse_event_list(E.event[i], E.events_data[i])
+# parse_event_list(E.event[i], E.events_data[i])
 # S.print_out()
 
 # S=ExampleSet("train", "train4.ex", 1,0,1,0)
