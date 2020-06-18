@@ -167,13 +167,13 @@ class ExampleSet:
             for _ in range(self.num_examples):
                 e = random.choice(self.example)
                 self.example_sel.append(e)
-                register_example(e, self)
+                register_example(e, self, False)
         elif mode == "PERMUTED":
             example_copy = copy.copy(self.example)
             for _ in range(self.num_examples):
                 e = example_copy.pop(random.randint(0, len(example_copy)-1))
                 self.example_sel.append(e)
-                register_example(e, self)
+                register_example(e, self, False)
         elif mode == "PROBABILISTIC":
             total_freq = 0.0
             freq_cum = [0.0]
@@ -192,7 +192,7 @@ class ExampleSet:
                     example_index+=1
                 e = self.example[example_index]
                 self.example_sel.append(e)
-                register_example(e, self)
+                register_example(e, self, False)
         elif mode == "PIPE":
             #TODO
             pass
@@ -709,7 +709,7 @@ def read_example(S: ExampleSet, example_list: List[str]):
                 parse_event_list(E.event[i], E.events_data[i])
 
 
-def register_example(E: Example, S: ExampleSet):
+def register_example(E: Example, S: ExampleSet, new=True):
     """ Add Example E to ExampleSet S and update the attributes of S
 
     :param E: The Example that is to be added to S
@@ -724,7 +724,8 @@ def register_example(E: Example, S: ExampleSet):
     else:
         S.last_example.next = E
         S.last_example = E
-    S.example.append(E)
+    if new:
+        S.example.append(E)
     E.set = S
 
 
@@ -883,7 +884,7 @@ if __name__ == "__main__":
 
     for i in range(10):
         train4 = ExampleSet(None, "train4", "train4.ex", 0, 1, 0, 1)
-        train4.sort_examples_by_mode("RANDOM")
+        train4.sort_examples_by_mode("RANDOMIZED")
         f = copy.copy(train4.first_example)
         s="test random on train4.ex "
         s+= f.name
