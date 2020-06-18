@@ -5,7 +5,6 @@ f = open("train4.ex", "r")
 
 list = f.read().split(";")
 print(list)
-# f2 = open("scratch.txt", "r")
 # list2 = f2.read().split(";")
 # print(list2)
 a = []

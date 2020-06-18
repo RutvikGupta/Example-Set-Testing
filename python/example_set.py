@@ -4,6 +4,7 @@ from python import example_defaults
 import re
 import numpy as np
 import random
+from python.network import Network
 
 
 class ExampleSet:
@@ -99,7 +100,7 @@ class ExampleSet:
     DEF_S_default_target: int
     DEF_S_active_target: int
     file_name: str
-    network: None  # Network class object
+    network: Network  # Network class object
 
     def __init__(self, network: None, name: str, file_name: str, default_input: int, active_input: int,
                  default_target: int,
@@ -415,6 +416,14 @@ def parse_event_list(event: Event, event_list: str):
     :return: false if an error is found
     "rtype: optional, false
     """
+    network = event.example.set.network
+    input_group_len = []
+    target_group_len = []
+    for group in network.input_groups:
+        input_group_len.append(group.num_units)
+    for group in network.output_groups:
+        target_group_len.append(group.num_units)
+
     event_string = event_list.strip()
     inp_tar_lst = re.split("[IT]:", event_string)
     inp_tar_lst.pop(0)
@@ -429,31 +438,36 @@ def parse_event_list(event: Event, event_list: str):
             i += 1
 
     if "I" in event_dict:
-        Input_group = UnitGroup(event, True, len(event_dict["I"]), "Input")
-        for i in range(len(event_dict["I"])):
-            Input_group.add_units(True, int(event_dict["I"][i]))
-        if Input_group.check_units_size(True) is False:
-            return parseError(event.example.set, "Too many units")
+        add_unit_groups(True, input_group_len, event_dict["I"], "Input_Group ")
 
     if "T" in event_dict:
-        Target_group = UnitGroup(event, False, len(event_dict["T"]), "Target")
-        for i in range(len(event_dict["T"])):
-            Target_group.add_units(False, int(event_dict["T"][i]))
-        if Target_group.check_units_size(False) is False:
-            return parseError(event.example.set, "Too many units")
+        add_unit_groups(False, target_group_len, event_dict["T"], "Target_Group ")
 
     if "B" in event_dict:
-        Input_group = UnitGroup(event, True, len(event_dict["B"]), "Input")
-        Target_group = UnitGroup(event, False, len(event_dict["B"]), "Target")
-        for i in range(len(event_dict["B"])):
-            Input_group.add_units(True, int(event_dict["B"][i]))
-            Target_group.add_units(False, int(event_dict["B"][i]))
+        add_unit_groups(True, input_group_len, event_dict["I"], "Input_Group ")
+        add_unit_groups(False, target_group_len, event_dict["T"], "Target_Group ")
 
-        if Input_group.check_units_size(True) is False:
-            return parseError(event.example.set, "Too many units")
 
-        if Target_group.check_units_size(False) is False:
+def add_unit_groups(doing_inputs: bool, group_len: List[int], units: List[str], unitName: str):
+    counter = 0
+    group_counter = 0
+    while counter < len(units) and group_counter < len(group_len):
+        unit_group = UnitGroup(event, doing_inputs, group_len[group_counter], unitName + str(group_counter))
+        for _ in range(group_len[group_counter]):
+            if counter < len(units):
+                unit_group.add_units(doing_inputs, int(units[counter]))
+                counter += 1
+            else:
+                break
+        if unit_group.check_units_size(doing_inputs) is False:
             return parseError(event.example.set, "Too many units")
+        group_counter += 1
+    if group_counter < len(group_len):
+        while group_counter < len(group_len):
+            unit_group = UnitGroup(event, doing_inputs, group_len[group_counter], unitName + str(group_counter))
+            if unit_group.check_units_size(doing_inputs) is False:
+                return parseError(event.example.set, "Too many units")
+            group_counter += 1
 
 
 def assign_field_values(lookup_string: str, S: ExampleSet, value: str, obj_type: str, event=None):
@@ -847,8 +861,4 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    works_lst_ex = ["xor_dense", "bench", "digits", "digits2", "encoder.dense",
-                    "kohonen", "negation", "on-off", "on-off2", "rand10x40", "recoder",
-                    "rhw-sequence.trn", "sequence", "train4"]
-
     ExampleSet(None, "train4.ex", "train4.ex", 0, 1, 0, 1).print_out()
