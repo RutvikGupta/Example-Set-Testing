@@ -438,17 +438,17 @@ def parse_event_list(event: Event, event_list: str):
             i += 1
 
     if "I" in event_dict:
-        add_unit_groups(True, input_group_len, event_dict["I"], "Input_Group ")
+        add_unit_groups(event, True, input_group_len, event_dict["I"], "Input_Group ")
 
     if "T" in event_dict:
-        add_unit_groups(False, target_group_len, event_dict["T"], "Target_Group ")
+        add_unit_groups(event,False, target_group_len, event_dict["T"], "Target_Group ")
 
     if "B" in event_dict:
-        add_unit_groups(True, input_group_len, event_dict["I"], "Input_Group ")
-        add_unit_groups(False, target_group_len, event_dict["T"], "Target_Group ")
+        add_unit_groups(event, True, input_group_len, event_dict["I"], "Input_Group ")
+        add_unit_groups(event, False, target_group_len, event_dict["T"], "Target_Group ")
 
 
-def add_unit_groups(doing_inputs: bool, group_len: List[int], units: List[str], unitName: str):
+def add_unit_groups(event: Event, doing_inputs: bool, group_len: List[int], units: List[str], unitName: str):
     counter = 0
     group_counter = 0
     while counter < len(units) and group_counter < len(group_len):
