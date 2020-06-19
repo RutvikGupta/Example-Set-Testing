@@ -416,14 +416,16 @@ def parse_event_list(event: Event, event_list: str):
     :return: false if an error is found
     "rtype: optional, false
     """
-    network = event.example.set.network
     input_group_len = []
+    input_group_name = []
     target_group_len = []
-    for group in network.input_groups:
+    target_group_name = []
+    for group in event.example.set.input_group:
         input_group_len.append(group.num_units)
-    for group in network.output_groups:
+        input_group_name.append(group.name)
+    for group in event.example.set.target_group:
         target_group_len.append(group.num_units)
-
+        target_group_name.append(group.name)
     event_string = event_list.strip()
     inp_tar_lst = re.split("[IT]:", event_string)
     inp_tar_lst.pop(0)
@@ -438,21 +440,21 @@ def parse_event_list(event: Event, event_list: str):
             i += 1
 
     if "I" in event_dict:
-        add_unit_groups(event, True, input_group_len, event_dict["I"], "Input_Group ")
+        add_unit_groups(event, True, input_group_len, event_dict["I"], input_group_name)
 
     if "T" in event_dict:
-        add_unit_groups(event,False, target_group_len, event_dict["T"], "Target_Group ")
+        add_unit_groups(event, False, target_group_len, event_dict["T"], target_group_name)
 
     if "B" in event_dict:
-        add_unit_groups(event, True, input_group_len, event_dict["I"], "Input_Group ")
-        add_unit_groups(event, False, target_group_len, event_dict["T"], "Target_Group ")
+        add_unit_groups(event, True, input_group_len, event_dict["I"], input_group_name)
+        add_unit_groups(event, False, target_group_len, event_dict["T"], target_group_name)
 
 
-def add_unit_groups(event: Event, doing_inputs: bool, group_len: List[int], units: List[str], unitName: str):
+def add_unit_groups(event: Event, doing_inputs: bool, group_len: List[int], units: List[str], unitNames: List[str]):
     counter = 0
     group_counter = 0
     while counter < len(units) and group_counter < len(group_len):
-        unit_group = UnitGroup(event, doing_inputs, group_len[group_counter], unitName + str(group_counter))
+        unit_group = UnitGroup(event, group_len[group_counter], unitNames[group_counter])
         for _ in range(group_len[group_counter]):
             if counter < len(units):
                 unit_group.add_units(doing_inputs, int(units[counter]))
@@ -464,7 +466,7 @@ def add_unit_groups(event: Event, doing_inputs: bool, group_len: List[int], unit
         group_counter += 1
     if group_counter < len(group_len):
         while group_counter < len(group_len):
-            unit_group = UnitGroup(event, doing_inputs, group_len[group_counter], unitName + str(group_counter))
+            unit_group = UnitGroup(event, group_len[group_counter], unitNames[group_counter])
             if unit_group.check_units_size(doing_inputs) is False:
                 return parseError(event.example.set, "Too many units")
             group_counter += 1
