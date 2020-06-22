@@ -103,8 +103,10 @@ class ExampleSet:
     file_name: str
     network: Network  # Network class object
     proc = None  # a code which needs to be implemented before loading in values
+    input_group = None  # List[Group]
+    target_group = None  # List[Group]
 
-    def __init__(self, network: None, name: str, file_name: str, default_input: int, active_input: int,
+    def __init__(self, name: str, file_name: str, input_groups, target_groups, default_input: int, active_input: int,
                  default_target: int,
                  active_target: int, def_s_pipe_loop=example_defaults.DEF_S_pipeLoop,
                  def_s_max_time=example_defaults.DEF_S_maxTime, def_s_min_time=example_defaults.DEF_S_minTime,
@@ -126,7 +128,8 @@ class ExampleSet:
         self.num_events = 0
         self.example = []
         self.file_name = file_name
-        self.network = network
+        self.input_group = input_groups
+        self.target_group = target_groups
         self.read_in_file(file_name)
         self.proc = None
 
@@ -230,10 +233,8 @@ class ExampleSet:
     def read_example(self, example_list: List[str]):
         """ Read the example_list from the .ex file, fill attributes of S and
         registers the example (represented by example_list) in S by calling register_example(.)
-
-        :param S: the ExampleSet where we add the example
-        :type S: ExampleSet
-        :param example_list: a substring of the .ex file representing an example. example_files are separated by semicolon ; .
+        :param example_list: a substring of the .ex file representing an example. example_files are separated by
+               semicolon ; .
         :type example_list: List[str]
         """
         example_list.pop()
@@ -423,4 +424,4 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    ExampleSet(None, "train4.ex", "train4.ex", 0, 1, 0, 1).print_out()
+    ExampleSet("train4.ex", "train4.ex", [], [], 0, 1, 0, 1).print_out()
