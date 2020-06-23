@@ -139,15 +139,14 @@ class ExampleSet:
         self.proc = None
         self.sort_mode = "ORDERED"
 
-        # redundant code as the list will always be empty
-        # if self.example:
-        #     self.current_example = self.example[0]
-        #     self.curr_ex_index = 0
-        # else:
-        #     self.current_example = None
-        #     self.curr_ex_index = None
-        #
-        # self.sort_examples_by_mode()
+        if self.example:
+            self.current_example = self.example[0]
+            self.curr_ex_index = 0
+        else:
+            self.current_example = None
+            self.curr_ex_index = None
+
+        self.sort_examples_by_mode()
 
     def sort_examples_by_mode(self, mode="ORDERED"):
         """ Fills self.example_sorted, which is the list of indexes in self.examples
