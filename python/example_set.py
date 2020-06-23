@@ -264,6 +264,11 @@ class ExampleSet:
         # self.current_example = self.current_example.next
         # return self.current_example
 
+    def get_current_example(self):
+        """ Returns current example
+        """
+        return self.example[self.example_sorted[self.curr_ex_index]]
+
     def reset_example_list(self, mode="ORDERED"):
         """ Re-sort the example list according to mode and updates first_example,
         last_example and each example.next accordingly.
