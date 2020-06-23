@@ -1,9 +1,10 @@
 import copy
-from typing import List
+from typing import List, Optional
 from python import example_defaults
 import re
 import random
-from python.network import Network
+# from python.network import Network
+# ExampleSet is already being imported to network.py  #TODO
 from python.example import Example
 from python.event import Event
 
@@ -31,10 +32,16 @@ class ExampleSet:
     :type permuted: List[Example]
     :param example_sel: list of examples but sorted by current selection mode
     :type example_sel: List[Example]
+    :param example_sorted: List of indexes from self.examples sorted by current selection mode
+    :type example_sorted: List[int]
     :param selfent_example_num:
     :type selfent_example_num: int
     :param selfent_example:
     :type selfent_example: Example
+    :param current_example: Current example used by the iterator
+    :type current_example: Example
+    :param curr_ex_index: Index of the current example in the list example_sorted
+    :type curr_ex_index: int
     :param first_example: first example
     :type first_example: Example
     :param last_example: last example
@@ -80,6 +87,9 @@ class ExampleSet:
     example = []  #: List[Example]  list of examples
     permuted = []  #: List[Example]
     example_sel = []
+    example_sorted = []
+    current_example = None
+    curr_ex_index = 0
     first_example = None  #: Example
     last_example = None  #: Example
     # Tcl_Obj defined in C macro in example.h
@@ -101,7 +111,7 @@ class ExampleSet:
     DEF_S_default_target: int
     DEF_S_active_target: int
     file_name: str
-    network: Network  # Network class object
+    network: None # Network class object
     proc = None  # a code which needs to be implemented before loading in values
     input_group = None  # List[Group]
     target_group = None  # List[Group]
@@ -132,9 +142,21 @@ class ExampleSet:
         self.target_group = target_groups
         self.read_in_file(file_name)
         self.proc = None
+        self.sort_mode = "ORDERED"
 
-    def sort_examples_by_mode(self, mode: str):
-        """ Fills self.example_sel, which is the list of examples but sorted by mode.
+        if self.example:
+            self.current_example = self.example[0]
+            self.curr_ex_index = 0
+        else:
+            self.current_example = None
+            self.curr_ex_index = None
+
+        self.sort_examples_by_mode()
+
+
+    def sort_examples_by_mode(self, mode="ORDERED"):
+        """ Fills self.example_sorted, which is the list of indexes in self.examples
+        but sorted by mode.
 
         In ORDERED mode, which is the default, examples will be presented in the order in
         which they were found in the example file.
@@ -169,19 +191,26 @@ class ExampleSet:
         :return:
         """
         mode = mode.upper()
+        self.sort_mode = mode
+        self.example_sorted = []
+        self.example_sel = []
+
         if mode == "ORDERED":
+            for i in range(self.num_examples):
+                self.example_sorted.append(i)
             self.example_sel = self.example
         elif mode == "RANDOMIZED":
             for _ in range(self.num_examples):
-                e = random.choice(self.example)
-                self.example_sel.append(e)
-                # register_example(e, self, False)
+                random_index = random.randint(0, self.num_examples-1)
+                self.example_sorted.append(random_index)
+                self.example_sel.append(self.example[random_index])
         elif mode == "PERMUTED":
-            example_copy = copy.copy(self.example)
-            for _ in range(self.num_examples):
-                e = example_copy.pop(random.randint(0, len(example_copy) - 1))
-                self.example_sel.append(e)
-                # register_example(e, self, False)
+            for i in range(self.num_examples):
+                self.example_sorted.append(i)
+            random.shuffle(self.example_sorted)
+            self.example_sel = copy.copy(self.example)
+            random.shuffle(self.example_sel)
+                
         elif mode == "PROBABILISTIC":
             total_freq = 0.0
             freq_cum = [0.0]
@@ -191,16 +220,16 @@ class ExampleSet:
                 if isinstance(e.frequency, float):
                     total_freq += e.frequency
                 else:
-                    total_freq += 0.0
+                    return self.parseError("error reading frequency")
                 freq_cum.append(total_freq)
             for _ in range(self.num_examples):
                 random_choice = random.random() * total_freq
                 example_index = 0
                 while freq_cum[example_index + 1] < random_choice:
                     example_index += 1
-                e = self.example[example_index]
-                self.example_sel.append(e)
-                # register_example(e, self, False)
+                self.example_sorted.append(example_index)
+                self.example_sel.append(self.example[example_index])
+
         elif mode == "PIPE":
             # TODO
             pass
@@ -213,6 +242,57 @@ class ExampleSet:
         # if self.num_examples > 0:
         #     self.first_example = self.example_sel[0]
         #     self.last_example = self.example_sel[-1]
+
+    def iterate_example(self) -> Optional[Example]:
+        """ Returns the example at index self.curr_ex_index and increments self.curr_ex_index
+        of self.example_sorted. If the index is the last index of the list, re-sort the list.
+        :return: next example
+        :rtype: Example
+        """
+
+        # TODO
+        # Note: the current linked list implementation only works when new sorted
+        # examples list do not have duplicate examples i.e. permutated
+
+        # TODO for now, please don't use example.next ... instead, get the next index
+        original_examples_list_index = self.example_sorted[self.curr_ex_index]
+        if self.curr_ex_index == self.num_examples - 1:
+            self.reset_example_list(self.sort_mode)
+            self.curr_ex_index = 0
+        else:
+            self.curr_ex_index += 1
+        return self.example[original_examples_list_index]
+
+
+        # if self.current_example is None:
+        #     return None
+        # if self.current_example.next is None or self.current_example is self.last_example:
+        #     self.reset_example_list()
+        # self.current_example = self.current_example.next
+        # return self.current_example
+
+    def reset_example_list(self, mode="ORDERED"):
+        """ Re-sort the example list according to mode and updates first_example,
+        last_example and each example.next accordingly.
+        :param mode: mode to sort example
+        :type mode: str
+        """
+        if not self.example:
+            return
+        self.example_sorted = []
+        self.sort_examples_by_mode(mode)
+        self.first_example = self.example[self.example_sorted[0]]
+        self.current_example = self.first_example
+        self.curr_ex_index = 0
+        self.last_example = self.example[self.example_sorted[-1]]
+        self.last_example.next = None
+        # TODO
+        # Note: the current linked list implementation only works when new sorted
+        # examples list do not have duplicate examples i.e. permutated
+        for e in range(self.num_examples - 1):
+            this_example = self.example[self.example_sorted[e]]
+            next_example = self.example[self.example_sorted[e+1]]
+            this_example.next = next_example
 
     def read_in_file(self, name: str):
         """ Return a list of strings separated by ";" from name .ex file and then
@@ -383,6 +463,15 @@ class ExampleSet:
             s += ex.print_out_example(False, 1)
         print(s)
 
+    def print_out_examples(self):
+        """ Prints out the list of examples in the currently sorted order
+        """
+        s = ""
+        for e in self.example_sorted:
+            s += " -> "
+            s += self.example[e].name + " i=" + str(e)
+        print(s)
+
     def parseError(self, fmt: str) -> bool:
         """ Prints error message fmt regarding ExampleSet S and return False
         """
@@ -424,4 +513,24 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    ExampleSet("train4.ex", "train4.ex", [], [], 0, 1, 0, 1).print_out()
+    E=ExampleSet("train4.ex", "train4.ex", [], [], 0, 1, 0, 1)
+    E.reset_example_list("ORDERED")
+    E.print_out_examples()
+    E.reset_example_list("PERMUTED")
+    E.print_out_examples()
+    E.reset_example_list("PROBABILISTIC")
+    E.print_out_examples()
+    E.reset_example_list("ORDERED")
+    E.print_out_examples()
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+    print(E.iterate_example().name)
+

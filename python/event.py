@@ -103,10 +103,11 @@ class Event:
         input_group_name = []
         target_group_len = []
         target_group_name = []
-        for group in event.example.set.input_group:
+        # was called event.example.set.input_group, but this caused error?
+        for group in self.example.set.input_group:
             input_group_len.append(group.num_units)
             input_group_name.append(group.name)
-        for group in event.example.set.target_group:
+        for group in self.example.set.target_group:
             target_group_len.append(group.num_units)
             target_group_name.append(group.name)
         event_string = event_list.strip()
