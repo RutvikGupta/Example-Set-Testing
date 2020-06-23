@@ -3,8 +3,6 @@ from typing import List, Optional
 from python import example_defaults
 import re
 import random
-# from python.network import Network
-# ExampleSet is already being imported to network.py  #TODO
 from python.example import Example
 from python.event import Event
 
@@ -74,8 +72,6 @@ class ExampleSet:
     :type file_name: str
     :param file_str: string representation of the raw file
     :type file_str: str
-    :param network: network that this example set belongs to
-    :type network: Network
     """
     name: str
     num: int
@@ -111,7 +107,6 @@ class ExampleSet:
     DEF_S_default_target: int
     DEF_S_active_target: int
     file_name: str
-    network: None # Network class object
     proc = None  # a code which needs to be implemented before loading in values
     input_group = None  # List[Group]
     target_group = None  # List[Group]
@@ -144,15 +139,15 @@ class ExampleSet:
         self.proc = None
         self.sort_mode = "ORDERED"
 
-        if self.example:
-            self.current_example = self.example[0]
-            self.curr_ex_index = 0
-        else:
-            self.current_example = None
-            self.curr_ex_index = None
-
-        self.sort_examples_by_mode()
-
+        # redundant code as the list will always be empty
+        # if self.example:
+        #     self.current_example = self.example[0]
+        #     self.curr_ex_index = 0
+        # else:
+        #     self.current_example = None
+        #     self.curr_ex_index = None
+        #
+        # self.sort_examples_by_mode()
 
     def sort_examples_by_mode(self, mode="ORDERED"):
         """ Fills self.example_sorted, which is the list of indexes in self.examples
@@ -198,10 +193,10 @@ class ExampleSet:
         if mode == "ORDERED":
             for i in range(self.num_examples):
                 self.example_sorted.append(i)
-            self.example_sel = self.example
+                self.example_sel.append(self.example[i])
         elif mode == "RANDOMIZED":
             for _ in range(self.num_examples):
-                random_index = random.randint(0, self.num_examples-1)
+                random_index = random.randint(0, self.num_examples - 1)
                 self.example_sorted.append(random_index)
                 self.example_sel.append(self.example[random_index])
         elif mode == "PERMUTED":
@@ -210,7 +205,7 @@ class ExampleSet:
             random.shuffle(self.example_sorted)
             self.example_sel = copy.copy(self.example)
             random.shuffle(self.example_sel)
-                
+
         elif mode == "PROBABILISTIC":
             total_freq = 0.0
             freq_cum = [0.0]
@@ -263,7 +258,6 @@ class ExampleSet:
             self.curr_ex_index += 1
         return self.example[original_examples_list_index]
 
-
         # if self.current_example is None:
         #     return None
         # if self.current_example.next is None or self.current_example is self.last_example:
@@ -291,7 +285,7 @@ class ExampleSet:
         # examples list do not have duplicate examples i.e. permutated
         for e in range(self.num_examples - 1):
             this_example = self.example[self.example_sorted[e]]
-            next_example = self.example[self.example_sorted[e+1]]
+            next_example = self.example[self.example_sorted[e + 1]]
             this_example.next = next_example
 
     def read_in_file(self, name: str):
@@ -513,7 +507,7 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    E=ExampleSet("train4.ex", "train4.ex", [], [], 0, 1, 0, 1)
+    E = ExampleSet("train4.ex", "train4.ex", [], [], 0, 1, 0, 1)
     E.reset_example_list("ORDERED")
     E.print_out_examples()
     E.reset_example_list("PERMUTED")
@@ -533,4 +527,3 @@ if __name__ == "__main__":
     print(E.iterate_example().name)
     print(E.iterate_example().name)
     print(E.iterate_example().name)
-
