@@ -87,7 +87,8 @@ class Event:
                         value = element[colon_index + 2:].strip()
                     else:
                         value = element[colon_index + 1:].strip()
-                    self.assign_field_values(lookup_string, value)
+                    if self.assign_field_values(lookup_string, value) is False:
+                        return False
                     break
         return True
 
@@ -124,14 +125,19 @@ class Event:
                 i += 1
 
         if "I" in event_dict:
-            self.add_unit_groups(True, input_group_len, event_dict["I"], input_group_name)
+            if self.add_unit_groups(True, input_group_len, event_dict["I"], input_group_name) is False:
+                return False
 
         if "T" in event_dict:
-            self.add_unit_groups(False, target_group_len, event_dict["T"], target_group_name)
+            if self.add_unit_groups(False, target_group_len, event_dict["T"], target_group_name) is False:
+                return False
 
         if "B" in event_dict:
-            self.add_unit_groups(True, input_group_len, event_dict["I"], input_group_name)
-            self.add_unit_groups(False, target_group_len, event_dict["T"], target_group_name)
+            if self.add_unit_groups(True, input_group_len, event_dict["B"], input_group_name):
+                return False
+            if self.add_unit_groups(False, target_group_len, event_dict["B"], target_group_name):
+                return False
+        return True
 
     def add_unit_groups(self, doing_inputs: bool, group_len: List[int], units: List[str], unitNames: List[str]):
         counter = 0
@@ -153,6 +159,7 @@ class Event:
                 if unit_group.check_units_size(doing_inputs) is False:
                     return self.example.set.parseError("Too many units")
                 group_counter += 1
+        return True
 
     def print_out_event(self, printing=True, tabs=0):
         """ Prints out the instance variables of an Event and of its input and target groups
@@ -251,6 +258,7 @@ class Event:
                 self.active_target = None
             else:
                 return self.example.set.parseError("missing value after \"actT:\" in Event header")
+        return True
 
 
 # These are helper functions for the printing functions.

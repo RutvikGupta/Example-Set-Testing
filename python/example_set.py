@@ -1,3 +1,4 @@
+
 import copy
 from typing import List, Optional
 from python import example_defaults
@@ -135,18 +136,8 @@ class ExampleSet:
         self.file_name = file_name
         self.input_group = input_groups
         self.target_group = target_groups
-        self.read_in_file(file_name)
         self.proc = None
         self.sort_mode = "ORDERED"
-
-        if self.example:
-            self.current_example = self.example[0]
-            self.curr_ex_index = 0
-        else:
-            self.current_example = None
-            self.curr_ex_index = None
-
-        self.sort_examples_by_mode()
 
     def sort_examples_by_mode(self, mode="ORDERED"):
         """ Fills self.example_sorted, which is the list of indexes in self.examples
@@ -233,10 +224,6 @@ class ExampleSet:
         else:
             return self.parseError("invalid example selection mode")
 
-        # if self.num_examples > 0:
-        #     self.first_example = self.example_sel[0]
-        #     self.last_example = self.example_sel[-1]
-
     def iterate_example(self) -> Optional[Example]:
         """ Returns the example at index self.curr_ex_index and increments self.curr_ex_index
         of self.example_sorted. If the index is the last index of the list, re-sort the list.
@@ -252,7 +239,6 @@ class ExampleSet:
         original_examples_list_index = self.example_sorted[self.curr_ex_index]
         if self.curr_ex_index == self.num_examples - 1:
             self.reset_example_list(self.sort_mode)
-            self.curr_ex_index = 0
         else:
             self.curr_ex_index += 1
         return self.example[original_examples_list_index]
@@ -306,7 +292,7 @@ class ExampleSet:
         example_list = []
         for e in split_list:
             example_list.append(e.strip())
-        self.read_example(example_list)
+        return self.read_example(example_list)
 
     def read_example(self, example_list: List[str]):
         """ Read the example_list from the .ex file, fill attributes of S and
@@ -326,8 +312,11 @@ class ExampleSet:
         for j in range(self.num_examples):
             E = Example(self)
             self.register_example(E)
-            # example_list[j] = ignore_commented_lines(example_list[j])
-            example_list[j] = E.parse_example_arguments(example_list[j])
+            res = E.parse_example_arguments(example_list[j])
+            if res is False:
+                return False
+            else:
+                example_list[j] = res
             E.parse_example_string(example_list[j])
             if E.events_data != [] and E.events_data[0] == "":
                 E.events_data.pop(0)
@@ -335,11 +324,23 @@ class ExampleSet:
                 new_event = Event(E)
                 E.event.append(new_event)
             if E.num_events == 1:
-                E.event[0].parse_event_list(example_list[j])
+                if E.event[0].parse_event_list(example_list[j]) is False:
+                    return False
             else:
                 for i in range(E.num_events):
-                    E.event[i].parse_event_header_string(E.event_headers[i])
-                    E.event[i].parse_event_list(E.events_data[i])
+                    if E.event[i].parse_event_header_string(E.event_headers[i]) is False:
+                        return False
+                    if E.event[i].parse_event_list(E.events_data[i]) is False:
+                        return False
+            if self.example:
+                self.current_example = self.example[0]
+                self.curr_ex_index = 0
+            else:
+                self.current_example = None
+                self.curr_ex_index = None
+
+            self.sort_examples_by_mode()
+            return True
 
     def register_example(self, E: Example, new=True):
         """ Add Example E to ExampleSet S and update the attributes of S
@@ -375,7 +376,8 @@ class ExampleSet:
                 if index < square_index:
                     find_newline = example_header[index:].find("\n") + index
                     value = example_header[index + len(lookup_string): find_newline].strip()
-                    self.assign_field_values(lookup_string, value)
+                    if self.assign_field_values(lookup_string, value) is False:
+                        return False
                     example_header = example_header.replace(example_header[index: find_newline + 1], '')
         return example_header
 
@@ -444,6 +446,7 @@ class ExampleSet:
                 self.active_target = None
             else:
                 return self.parseError("missing value after \"actT:\" in ExampleSet header")
+        return True
 
     def print_out_example_set(self):
         """ Prints out the instance variables of an ExampleSet and of its example_files.

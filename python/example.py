@@ -58,9 +58,12 @@ class Example:
         if "name:" in example_array:
             index = example_array.find("name:")
             find_newline = example_array[index:].find("\n") + index
-            example_name = example_array[index + len("name:"): find_newline]
-            self.name = example_name
-            example_array = example_array.replace(example_array[index: find_newline + 1], '')
+            example_name = example_array[index + len("name:"): find_newline].strip()
+            if example_name == "":
+                self.name = self.set.example.index(self)
+            else:
+                self.name = example_name
+                example_array = example_array.replace(example_array[index: find_newline + 1], '')
 
         if "freq:" in example_array:
             index = example_array.find("freq:")
@@ -70,6 +73,8 @@ class Example:
             if p.match(example_freq):
                 self.frequency = float(example_freq)
                 example_array = example_array.replace(example_array[index: find_newline + 1], '')
+            else:
+                return self.set.parseError("missing value after \"freq:\" in Example header")
 
         if "proc:" in example_array:
             index = example_array.find("proc:")
