@@ -339,8 +339,8 @@ class ExampleSet:
                 self.current_example = None
                 self.curr_ex_index = None
 
-            self.sort_examples_by_mode()
-            return True
+        self.sort_examples_by_mode()
+        return True
 
     def register_example(self, E: Example, new=True):
         """ Add Example E to ExampleSet S and update the attributes of S
