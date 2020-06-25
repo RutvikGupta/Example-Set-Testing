@@ -372,11 +372,8 @@ class ExampleSet:
     def print_out_examples(self):
         """ Prints out the list of examples in the currently sorted order
         """
-        s = ""
-        for e in self.example_sorted:
-            s += " -> "
-            s += self.example[e].name + " i=" + str(e)
-        print(s)
+        self.example_iterator.print_out_examples()
+
 
     def parseError(self, fmt: str) -> bool:
         """ Prints error message fmt regarding ExampleSet S and return False
@@ -438,9 +435,9 @@ if __name__ == "__main__":
     E.read_in_file("train4.ex")
     # E.write_example_set_to_file("testing.txt")
 
-    E.set_sort_mode("ORDERED")
+    E.set_sort_mode("PERMUTED")
     E.print_out_examples()
-    for i in range(6):
-        print(E.iterate_example().name + E.get_next_example().name)
+    for i in range(7):
+        print(E.iterate_example().name + E.get_current_example().name)
 
 

@@ -173,3 +173,9 @@ class Iterator:
             this_example.next = next_example
         self.cycle_num += 1
 
+    def print_out_examples(self):
+        s = ""
+        for e in self.example_sorted:
+            s += " -> "
+            s += self.example[e].name + " i=" + str(e)
+        print(s)
