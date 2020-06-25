@@ -1,8 +1,12 @@
+
 from typing import List
 import re
-from python import example_defaults
 from python.unit_group import UnitGroup
 
+"""/* EVENT FIELDS */"""
+DEF_V_maxTime = None
+DEF_V_minTime = None
+DEF_V_graceTime = None
 
 class Event:
     """Event class. Consist of information related to one event of the Example object
@@ -54,9 +58,9 @@ class Event:
         S = E.set
         self.example = E
         # E.event.append(self)
-        self.max_time = example_defaults.DEF_V_maxTime
-        self.min_time = example_defaults.DEF_V_minTime
-        self.grace_time = example_defaults.DEF_V_graceTime
+        self.max_time = DEF_V_maxTime
+        self.min_time = DEF_V_minTime
+        self.grace_time = DEF_V_graceTime
         self.default_input = S.default_input
         self.active_input = S.active_input
         self.default_target = S.default_target
@@ -146,18 +150,26 @@ class Event:
             unit_group = UnitGroup(self, group_len[group_counter], unitNames[group_counter])
             for _ in range(group_len[group_counter]):
                 if counter < len(units):
-                    unit_group.add_units(doing_inputs, int(units[counter]))
+                    if unit_group.add_units(doing_inputs, units[counter]) is False:
+                        return self.example.set.parseError("Invalid type if unit passed at Event layer " + str(
+                            self.example.event.index(self)) + " of example " + str(
+                            self.example.set.example.index(self.example)))
                     counter += 1
                 else:
                     break
             if unit_group.check_units_size(doing_inputs) is False:
-                return self.example.set.parseError("Too many units")
+                return self.example.set.parseError(
+                    "Too many input units in event " + str(
+                        self.example.event.index(self)) + " of example " + str(
+                        self.example.set.example.index(self.example)))
             group_counter += 1
         if group_counter < len(group_len):
             while group_counter < len(group_len):
                 unit_group = UnitGroup(self, group_len[group_counter], unitNames[group_counter])
                 if unit_group.check_units_size(doing_inputs) is False:
-                    return self.example.set.parseError("Too many units")
+                    return self.example.set.parseError("Too many target units" + str(
+                        self.example.event.index(self)) + " of example " + str(
+                        self.example.set.example.index(self.example)))
                 group_counter += 1
         return True
 
@@ -215,49 +227,63 @@ class Event:
             elif value == "-":
                 self.min_time = None
             else:
-                return self.example.set.parseError("missing value after \"min:\" in Event header")
+                return self.example.set.parseError("missing value after \"min:\" in header of event " + str(
+                    self.example.event.index(self)) + " of example " + str(
+                    self.example.set.example.index(self.example)))
         elif lookup_string == "max:":
             if p.match(value):
                 self.max_time = float(value)
             elif value == "-":
                 self.max_time = None
             else:
-                return self.example.set.parseError("missing value after \"max:\" in Event header")
+                return self.example.set.parseError("missing value after \"max:\" in header of event " + str(
+                    self.example.event.index(self)) + " of example " + str(
+                    self.example.set.example.index(self.example)))
         elif lookup_string == "grace:":
             if p.match(value):
                 self.grace_time = float(value)
             elif value == "-":
                 self.grace_time = None
             else:
-                return self.example.set.parseError("missing value after \"grace:\" in Event header")
+                return self.example.set.parseError("missing value after \"grace:\" in header of event " + str(
+                    self.example.event.index(self)) + " of example " + str(
+                    self.example.set.example.index(self.example)))
         elif lookup_string == "defI:":
             if p.match(value):
                 self.default_input = float(value)
             elif value == "-":
                 self.default_input = None
             else:
-                return self.example.set.parseError("missing value after \"defI:\" in Event header")
+                return self.example.set.parseError("missing value after \"defI:\" in header of event " + str(
+                    self.example.event.index(self)) + " of example " + str(
+                    self.example.set.example.index(self.example)))
         elif lookup_string == "defT:":
             if p.match(value):
                 self.default_target = float(value)
             elif value == "-":
                 self.default_target = None
             else:
-                return self.example.set.parseError("missing value after \"defT:\" in Event header")
+                return self.example.set.parseError("missing value after \"defT:\" in header of event " + str(
+                    self.example.event.index(self)) + " of example " + str(
+                    self.example.set.example.index(self.example)))
         elif lookup_string == "actI:":
             if p.match(value):
                 self.active_input = float(value)
             elif value == "-":
                 self.active_input = None
             else:
-                return self.example.set.parseError("missing value after \"actI:\" in Event header")
+                return self.example.set.parseError("missing value after \"actI:\" in header of event " + str(
+                    self.example.event.index(self)) + " of example " + str(
+                    self.example.set.example.index(self.example)))
         elif lookup_string == "actT:":
             if p.match(value):
                 self.active_target = float(value)
             elif value == "-":
                 self.active_target = None
             else:
-                return self.example.set.parseError("missing value after \"actT:\" in Event header")
+                return self.example.set.parseError("missing value after \"actT:\" in header of event " + str(
+                    self.example.event.index(self)) + " of example " + str(
+                    self.example.set.example.index(self.example)))
         return True
 
 

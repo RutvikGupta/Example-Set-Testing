@@ -1,12 +1,24 @@
 
 import copy
 from typing import List, Optional
-from python import example_defaults
 import re
 import random
 from python.example import Example
 from python.event import Event
 from python.iterator import Iterator
+
+"""/* EXAMPLE SET FIELDS */"""
+DEF_S_mode = bool(1 << 0)
+DEF_S_pipeLoop = True
+DEF_S_maxTime = 1.0
+DEF_S_minTime = 0.0
+DEF_S_graceTime = 0.0
+DEF_S_defaultInput = 0.0
+DEF_S_activeInput = 1.0
+DEF_S_defaultTarget = 0.0
+DEF_S_activeTarget = 1.0
+
+
 
 class ExampleSet:
     """ExampleSet Object. Stores a set of examples with similar properties
@@ -102,10 +114,6 @@ class ExampleSet:
     active_input: float
     default_target: float
     active_target: float
-    # int replaces short
-    num_group_names: int  # hidden
-    max_group_names: int  # hidden
-    group_name: list  # hidden
     DEF_S_default_input: int
     DEF_S_active_input: int
     DEF_S_default_target: int
@@ -117,9 +125,9 @@ class ExampleSet:
 
     def __init__(self, name: str, file_name: str, input_groups, target_groups, default_input: int, active_input: int,
                  default_target: int,
-                 active_target: int, def_s_pipe_loop=example_defaults.DEF_S_pipeLoop,
-                 def_s_max_time=example_defaults.DEF_S_maxTime, def_s_min_time=example_defaults.DEF_S_minTime,
-                 def_s_grace_time=example_defaults.DEF_S_graceTime):
+                 active_target: int, def_s_pipe_loop=DEF_S_pipeLoop,
+                 def_s_max_time=DEF_S_maxTime, def_s_min_time=DEF_S_minTime,
+                 def_s_grace_time=DEF_S_graceTime):
         self.name = name
         self.pipeLoop = def_s_pipe_loop
         self.max_time = def_s_max_time

@@ -1,4 +1,3 @@
-
 import numpy as np
 
 
@@ -50,15 +49,21 @@ class UnitGroup:
         :param doing_inputs: true if this UnitGroup object is the input of an Event; false otherwise
         :type doing_inputs: bool
         :param unit_value: value of the unit to be added to group
-        :type unit_value: int
+        :type unit_value: str
         """
         if unit_value is not None:  # if value is not given, use default
-            self.group = np.append(self.group, [unit_value])
+            if unit_value == "-":
+                self.group = np.append(self.group, [float("NaN")])
+            elif unit_value.isdigit():
+                self.group = np.append(self.group, [unit_value])
+            else:
+                return False
         else:
             if doing_inputs:  # if the Range is an input
                 self.group = np.append(self.group, [self.event.default_input])
             else:
                 self.group = np.append(self.group, [self.event.default_target])
+        return True
 
     def check_units_size(self, doing_inputs: bool) -> bool:
         """ Return True if self.group size is the correct number of units. Otherwise, fills self.group
