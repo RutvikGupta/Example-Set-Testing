@@ -51,6 +51,7 @@ class ExampleSet:
     :type current_example: Example
     :param curr_ex_index: Index of the current example in the list example_sorted
     :type curr_ex_index: int
+    :param cycle_num: the number of cycles through the list of examples
     :param first_example: first example
     :type first_example: Example
     :param last_example: last example
@@ -97,6 +98,7 @@ class ExampleSet:
     example_sorted = []
     current_example = None
     curr_ex_index = 0
+    cycle_num = 0
     first_example = None  #: Example
     last_example = None  #: Example
     # Tcl_Obj defined in C macro in example.h
@@ -242,6 +244,7 @@ class ExampleSet:
         # examples list do not have duplicate examples i.e. permutated
 
         # TODO for now, please don't use example.next ... instead, get the next index
+
         original_examples_list_index = self.example_sorted[self.curr_ex_index]
         if self.curr_ex_index == self.num_examples - 1:
             self.reset_example_list(self.sort_mode)
@@ -283,6 +286,7 @@ class ExampleSet:
             this_example = self.example[self.example_sorted[e]]
             next_example = self.example[self.example_sorted[e + 1]]
             this_example.next = next_example
+        self.cycle_num += 1
 
     def read_in_file(self, name: str):
         """ Return a list of strings separated by ";" from name .ex file and then
@@ -488,6 +492,21 @@ class ExampleSet:
     def print_out(self):
         self.print_out_example_set()
 
+    def write_example_set_to_file(self, file_name):
+        """ Writes text file representation of this example set to file_name file
+        :param file_name: string of the file to write to.
+        :type file_name: str
+        """
+        s = "hello world\noof"
+        f = open(file_name, "w")
+        f.write(s)
+
+    def write_example_set_header(self):
+        return
+
+
+
+
 
 def ignore_commented_lines(example_array: str):
     """
@@ -502,7 +521,7 @@ def ignore_commented_lines(example_array: str):
     return example_array
 
 
-# These are helper functions for the printing functions.
+# These are helper functions for the self.print_out functions.
 def tab(n=1):
     return "     " * n
 
@@ -521,22 +540,5 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 if __name__ == "__main__":
     E = ExampleSet("train4.ex", "train4.ex", [], [], 0, 1, 0, 1)
-    E.reset_example_list("ORDERED")
-    E.print_out_examples()
-    E.reset_example_list("PERMUTED")
-    E.print_out_examples()
-    E.reset_example_list("PROBABILISTIC")
-    E.print_out_examples()
-    E.reset_example_list("ORDERED")
-    E.print_out_examples()
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
-    print(E.iterate_example().name)
+    E.read_in_file("train4.ex")
+    E.write_example_set_to_file("testing.txt")
