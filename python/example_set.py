@@ -429,15 +429,15 @@ def format_object_line(L, num_tabs=0, row_size=10):
         # row_size -= 1
     return s + "\n"
 
-
 if __name__ == "__main__":
     E = ExampleSet("train4.ex", "train4.ex", [], [], 0, 1, 0, 1)
-    E.read_in_file("train4.ex")
+    E.read_in_file(E.file_name)
+    E.first_example.print_out()
     # E.write_example_set_to_file("testing.txt")
 
-    E.set_sort_mode("PERMUTED")
-    E.print_out_examples()
-    for i in range(7):
-        print(E.iterate_example().name + E.get_current_example().name)
-
-
+    # E.set_sort_mode("PERMUTED")
+    # E.print_out_examples()
+    # for i in range(7):
+    #     print(E.iterate_example().name + E.get_current_example().name)
+    #
+    #
