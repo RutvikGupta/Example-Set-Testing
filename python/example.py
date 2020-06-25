@@ -1,5 +1,7 @@
 import re
-from python import example_defaults
+
+"""/* EXAMPLE FIELDS */"""
+DEF_E_frequency = 1.0
 
 
 class Example:
@@ -35,7 +37,7 @@ class Example:
 
     # proc function is defined in the C macros
 
-    def __init__(self, S, frequency=example_defaults.DEF_E_frequency):
+    def __init__(self, S, frequency=DEF_E_frequency):
         self.frequency = frequency
         self.set = S
         self.event = []
@@ -48,8 +50,6 @@ class Example:
         """ Parse through example_array to find Example arguments and set the values
         in Example accordingly
 
-        :param E:
-        :type E: Example
         :param example_array:
         :type example_array:
         :return: new example array after the parsed parameters are removed
@@ -74,7 +74,8 @@ class Example:
                 self.frequency = float(example_freq)
                 example_array = example_array.replace(example_array[index: find_newline + 1], '')
             else:
-                return self.set.parseError("missing value after \"freq:\" in Example header")
+                return self.set.parseError("missing value after \"freq:\" in header of example " + str(
+                        self.example.set.example.index(self.example)))
 
         if "proc:" in example_array:
             index = example_array.find("proc:")
@@ -118,9 +119,6 @@ class Example:
 
         If calling this function directly, please leave
         printing=True and tabs=0 to their default values.
-
-        :param E: the example to be printed
-        :type E: Example
         """
         ex = self
         L = [("Obj", "Example"), ("name", ex.name), ("num", ex.num)]
