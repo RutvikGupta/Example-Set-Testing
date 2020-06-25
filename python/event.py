@@ -1,8 +1,12 @@
+
 from typing import List
 import re
-from python import example_defaults
 from python.unit_group import UnitGroup
 
+"""/* EVENT FIELDS */"""
+DEF_V_maxTime = None
+DEF_V_minTime = None
+DEF_V_graceTime = None
 
 class Event:
     """Event class. Consist of information related to one event of the Example object
@@ -54,9 +58,9 @@ class Event:
         S = E.set
         self.example = E
         # E.event.append(self)
-        self.max_time = example_defaults.DEF_V_maxTime
-        self.min_time = example_defaults.DEF_V_minTime
-        self.grace_time = example_defaults.DEF_V_graceTime
+        self.max_time = DEF_V_maxTime
+        self.min_time = DEF_V_minTime
+        self.grace_time = DEF_V_graceTime
         self.default_input = S.default_input
         self.active_input = S.active_input
         self.default_target = S.default_target
