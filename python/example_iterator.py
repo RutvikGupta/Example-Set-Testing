@@ -77,9 +77,7 @@ class ExampleIterator:
         """ Re-sort the example list according to mode and updates first_example,
         last_example and each example.next accordingly.
         """
-        print(self.index_list)
-        for i in self.iter_list:
-            print(i.value)
+
         if not self.example:
             return
         self.sort_examples()
