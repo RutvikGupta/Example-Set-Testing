@@ -17,6 +17,8 @@ class Example:
     :type num_events: int
     :param event: list of Events in this example
     :type event: List[Event]
+    :param curr_ev_index: index of current Event
+    :type curr_ev_index: int
     :param set: the ExampleSet in which this example belows to
     :type set: ExampleSet
     :param next: next example
@@ -27,6 +29,7 @@ class Example:
     num = 0  # : int
     num_events = 0  #: int
     event = []  #: List[Event]
+    curr_ev_index = 0
     set = None  #: ExampleSet
     next = None  #: Example
     # float replaces real
@@ -46,6 +49,47 @@ class Example:
         self.event_headers = []
 
         # initExampleExtension(E)
+
+    def iterate_event(self):
+        """ Return the event at curr_ev_index and increment curr_ev_index by 1
+        """
+        if self.curr_ev_index < self.num_events:
+            e = self.event[self.curr_ev_index]
+            self.curr_ev_index += 1
+            return e
+        else:
+            print("Error: already reached end of events list!")
+            return None
+
+    def current_event(self):
+        if self.event:
+            return self.event[self.curr_ev_index]
+        else:
+            print("Error: no event exists here")
+            return None
+
+    def next_event(self):
+        """ Return the next event after index curr_ev_index if it exists; else return none
+        """
+        if self.curr_ev_index + 1 < self.num_events:
+            return self.event[self.curr_ev_index + 1]
+        else:
+            print("Error: no event exists here")
+            return None
+
+    def first_event(self):
+        if self.event:
+            return self.event[0]
+        else:
+            print("Error: no event exists here")
+            return None
+
+    def last_event(self):
+        if self.event:
+            return self.event[-1]
+        else:
+            print("Error: no event exists here")
+            return None
 
     def parse_example_arguments(self, example_array: str) -> str:
         """ Parse through example_array to find Example arguments and set the values
