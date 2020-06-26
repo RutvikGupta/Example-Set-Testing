@@ -241,8 +241,10 @@ class ExampleSet:
             else:
                 self.current_example = None
                 self.curr_ex_index = None
-        # self.sort_examples()
+
         self.example_iterator = ExampleIterator(self)
+        if self.example_iterator.reset_example_list() is False:
+            return False
         return True
 
     def register_example(self, E: Example, new=True):
@@ -260,7 +262,6 @@ class ExampleSet:
             self.last_example = E
         if new:
             self.example.append(E)
-        E.set = self
 
     def parse_example_set_header_string(self, example_header: str):
         """ Parse through example_header substring and assign the values to S using lookup_list
@@ -434,5 +435,3 @@ if __name__ == "__main__":
     # E.print_out_examples()
     for i in range(8):
         print(E.iterate_example())
-
-    #

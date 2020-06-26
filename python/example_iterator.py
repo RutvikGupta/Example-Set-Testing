@@ -2,6 +2,7 @@ from example import Example
 from typing import Optional, List
 import random
 
+
 class ExampleIndex:
     def __init__(self, value: int):
         self.next = None
@@ -13,21 +14,18 @@ class ExampleIterator:
     curr: ExampleIndex
     iter_list: List[ExampleIndex]
     num_examples: int
+    index_list: List[int]
 
     def __init__(self, S):
         self.example_set = S
         self.example = S.example
         self.num_examples = S.num_examples
-        self.index_list = []
-        self.sort_examples()
-        # self.index_list = self.example_set.example_index
-        print(self.index_list)
-        self.iter_list = []
         self.cycle_num = 0
-        self.link_up_index_list()
-        # self.reset_example_list()
+        self.index_list = []
+        self.iter_list = []
 
     def link_up_index_list(self):
+        self.iter_list = []
         for i in range(self.num_examples):
             self.iter_list.append(ExampleIndex(self.index_list[i]))
 
@@ -79,10 +77,12 @@ class ExampleIterator:
         """
 
         if not self.example:
-            return
-        self.sort_examples()
+            return None
+        if self.sort_examples() is False:
+            return False
         self.link_up_index_list()
         self.cycle_num += 1
+        return True
 
     def print_out_examples(self):
         s = ""
@@ -121,7 +121,6 @@ class ExampleIterator:
         """
         mode = self.example_set.sort_mode
         self.index_list = []
-        self.iter_list = []
         if mode == "ORDERED":
             for i in range(self.num_examples):
                 self.index_list.append(i)
