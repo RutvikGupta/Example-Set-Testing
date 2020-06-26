@@ -57,7 +57,6 @@ class Event:
     def __init__(self, E):
         S = E.set
         self.example = E
-        # E.event.append(self)
         self.max_time = DEF_V_maxTime
         self.min_time = DEF_V_minTime
         self.grace_time = DEF_V_graceTime
@@ -68,7 +67,6 @@ class Event:
         self.input_group = []
         self.target_group = []
         self.proc = None
-        # initEventExtension(V)
 
     def parse_event_header_string(self, event_header: str):
         """ Parse through event_header substring and assign the values to event using lookup_list
@@ -125,8 +123,53 @@ class Event:
         i = 0
         for unit_type in ["I", "T", "B"]:
             if unit_type in event_string:
-                event_dict[unit_type] = inp_tar_lst[i].split()
+                event_dict[unit_type] = inp_tar_lst[i]
                 i += 1
+        for unit_type in event_dict:
+            if re.search(r'{(.*?)}[^*]', event_dict[unit_type]) is not None:
+                if unit_type == "I":
+                    res = self.add_specific_unit_group(True, event_dict[unit_type], input_group_name, input_group_len)
+                    if res is False:
+                        return False
+                    else:
+                        for name in res:
+                            index = input_group_name.index(name)
+                            input_group_name.pop(index)
+                            input_group_len.pop(index)
+                    event_dict["I"] = []
+
+                if unit_type == "T":
+                    res = self.add_specific_unit_group(False, event_dict[unit_type], target_group_name,
+                                                       target_group_len)
+                    if res is False:
+                        return False
+                    else:
+                        for name in res:
+                            index = target_group_name.index(name)
+                            target_group_name.pop(index)
+                            target_group_len.pop(index)
+                    event_dict["T"] = []
+
+                if unit_type == "B":
+                    res_tar = self.add_specific_unit_group(False, event_dict[unit_type], target_group_name,
+                                                           target_group_len)
+                    if res_tar is False:
+                        return False
+                    res_in = self.add_specific_unit_group(False, event_dict[unit_type], input_group_name,
+                                                          input_group_len)
+                    if res_in is False:
+                        return False
+                    else:
+                        for name in res_tar:
+                            index = target_group_name.index(name)
+                            target_group_name.pop(index)
+                            target_group_len.pop(index)
+
+                        for name in res_in:
+                            index = input_group_name.index(name)
+                            input_group_name.pop(index)
+                            input_group_len.pop(index)
+                    event_dict["B"] = []
 
         if "I" in event_dict:
             if self.add_unit_groups(True, input_group_len, event_dict["I"], input_group_name) is False:
@@ -143,11 +186,30 @@ class Event:
                 return False
         return True
 
+    def add_specific_unit_group(self, doing_inputs, unit_lst, group_names, group_lens):
+        unit_names = re.findall(r'{(.*?)}[^*]', unit_lst)
+        unit_values = re.split(r'{(.*?)}[^*]', unit_lst)
+        unit_values.pop(0)
+
+        for name in unit_names:
+            while name in unit_values:
+                unit_values.remove(name)
+        given_group_len = []
+        units = []
+        for i in range(len(unit_names)):
+            units.extend(unit_values[i].strip())
+            group_length = group_lens[group_names.index(unit_names[i])]
+            given_group_len.append(group_length)
+
+        if self.add_unit_groups(doing_inputs, given_group_len, units, unit_names) is False:
+            return False
+        return unit_names
+
     def add_unit_groups(self, doing_inputs: bool, group_len: List[int], units: List[str], unitNames: List[str]):
         counter = 0
         group_counter = 0
         reg = re.compile("{(.+)}\*")
-        if reg.match(units[0]):
+        if len(units) == 1 and reg.match(units[0]):
             open_brac = units[0].find("{")
             close_brac = units[0].find("}")
             value = units[0][open_brac + 1: close_brac]

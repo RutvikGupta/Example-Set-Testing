@@ -4,20 +4,22 @@ import numpy as np
 f = open("train4.ex", "r")
 
 list = f.read().split(";")
-print(list)
+# print(list)
 # list2 = f2.read().split(";")
 # print(list2)
-a = []
-for i in list:
-    a.append(i.strip())
-
-print(a)
-element = a[0]
-print(re.findall(r'\[(.+)\]', element))
-lst = re.split(r'\[.+\]', element)
+# a = []
+# for i in list:
+#     a.append(i.strip())
+#
+# print(a)
+element = "0 1 2 4"
+A = re.findall(r'{(.*?)}[^*]', element)
+lst = re.split(r'{(.*?)}[^*]', element)
+lst.pop(0)
+for i in A:
+    while i in lst:
+        lst.remove(i)
 print(lst)
-inp_tar_lst = re.split("[IT]:", lst[1])
-print(inp_tar_lst)
 
 #
 # def ignore_commented_lines(example_array: str):

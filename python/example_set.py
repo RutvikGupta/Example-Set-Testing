@@ -85,8 +85,7 @@ class ExampleSet:
     """
     name: str
     num: int
-    # need python mask
-    mode: int  # mask
+    mode: int
     num_examples: int
     num_events: int
 

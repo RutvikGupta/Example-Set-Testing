@@ -1,4 +1,3 @@
-
 import re
 
 """/* EXAMPLE FIELDS */"""
@@ -32,14 +31,11 @@ class Example:
     curr_ev_index = 0
     set = None  #: ExampleSet
     next = None  #: Example
-    # float replaces real
     frequency: float
-    probability = 0.0  #: float
+    probability = 0.0
     events_data = []
     event_headers = []
     proc = None
-
-    # proc function is defined in the C macros
 
     def __init__(self, S, frequency=DEF_E_frequency):
         self.frequency = frequency
@@ -47,8 +43,6 @@ class Example:
         self.event = []
         self.events_data = []
         self.event_headers = []
-
-        # initExampleExtension(E)
 
     def iterate_event(self):
         """ Return the event at curr_ev_index and increment curr_ev_index by 1
@@ -120,7 +114,7 @@ class Example:
                 example_array = example_array.replace(example_array[index: find_newline + 1], '')
             else:
                 return self.set.parseError("missing value after \"freq:\" in header of example " + str(
-                        self.example.set.example.index(self.example)))
+                    self.example.set.example.index(self.example)))
 
         if "proc:" in example_array:
             index = example_array.find("proc:")
