@@ -151,7 +151,7 @@ class ExampleSet:
 
     def sort_examples(self):
 
-        """ Fills self.example_sorted, which is the list of indexes in self.examples
+        """ Fills self.example_index, which is the list of indexes in self.examples
         but sorted by self.sort_mode
 
         In ORDERED mode, which is the default, examples will be presented in the order in
@@ -214,10 +214,10 @@ class ExampleSet:
                 freq_cum.append(total_freq)
             for _ in range(self.num_examples):
                 random_choice = random.random() * total_freq
-                example_index = 0
-                while freq_cum[example_index + 1] < random_choice:
-                    example_index += 1
-                self.example_index.append(example_index)
+                index = 0
+                while freq_cum[index + 1] < random_choice:
+                    index += 1
+                self.example_index.append(index)
 
         elif mode == "PIPE":
             # TODO
@@ -233,7 +233,7 @@ class ExampleSet:
         :param sort_mode: new sort mode
         :type sort_mode: str
         """
-        self.mode = sort_mode
+        self.sort_mode = sort_mode
         self.example_iterator.reset_example_list()
 
     def get_first_example(self):
@@ -320,7 +320,7 @@ class ExampleSet:
             else:
                 self.current_example = None
                 self.curr_ex_index = None
-
+        self.sort_examples()
         self.example_iterator = ExampleIterator(self, self.sort_mode)
         return True
 
