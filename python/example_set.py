@@ -1,9 +1,9 @@
 import random
 from typing import List
 import re
-from python.example import Example
-from python.event import Event
-from python.example_iterator import ExampleIterator
+from example import Example
+from event import Event
+from example_iterator import ExampleIterator
 
 """/* EXAMPLE SET FIELDS */"""
 DEF_S_mode = bool(1 << 0)
@@ -149,85 +149,6 @@ class ExampleSet:
     def iterate_example(self):
         return self.example_iterator.iterate_example()
 
-    def sort_examples(self):
-
-        """ Fills self.example_index, which is the list of indexes in self.examples
-        but sorted by self.sort_mode
-
-        In ORDERED mode, which is the default, examples will be presented in the order in
-        which they were found in the example file.
-
-        In RANDOMIZED mode, examples will be selected at random with replacement,
-        each having the same probability of selection. Note that this differs from
-        PERMUTED because it uses replacement. It differs from PROBABILISTIC because it
-        ignores the example frequency.
-
-        In PERMUTED mode, examples will be selected at random without replacement,
-        each having the same probability of selection. A different order will be
-        computed for each pass through the set.
-
-        In PROBABILISTIC mode, examples are selected based on their given frequency.
-        Specified frequency values will be normalized over all examples and this
-        distribution used for selection. If example sets are concatenated, the distribution
-        will be recalculated based on the specified frequencies. An example with no
-        frequency specified is given a value of 1.0.
-
-        PIPE mode is used for example sets that are reading from a pipe. The next example
-        will be read from the pipe and stored temporarily in the example set's pipeExample
-        field. This mode can only be used with example sets for which a pipe was opened
-        with "loadExamples ... -m PIPE". If the pipe is exhausted and the example set's
-        pipeLoop flag is set to TRUE, which is the default, the pipe will be re-opened
-        automatically. If an example set contains both stored examples and an open pipe,
-        you can switch between them by changing from PIPE mode to another mode.
-
-        CUSTOM mode allows you to write a procedure that generates the index of the next example. When it's time to
-        choose the next example, the example set's chooseExample procedure will be called. This should return an integer
-         between 0 and one less than the number of examples, inclusive.
-        """
-
-        mode = self.sort_mode
-        self.example_index = []
-
-        if mode == "ORDERED":
-            for i in range(self.num_examples):
-                self.example_index.append(i)
-        elif mode == "RANDOMIZED":
-            for _ in range(self.num_examples):
-                random_index = random.randint(0, self.num_examples - 1)
-                self.example_index.append(random_index)
-        elif mode == "PERMUTED":
-            for i in range(self.num_examples):
-                self.example_index.append(i)
-            random.shuffle(self.example_index)
-
-        elif mode == "PROBABILISTIC":
-            total_freq = 0.0
-            freq_cum = [0.0]
-            # cumulative frequency of all previous examples parsed. the greater the frequency
-            # of an example, the greater the increment over the previous value.
-            for e in self.example:
-                if isinstance(e.frequency, float):
-                    total_freq += e.frequency
-                else:
-                    total_freq += 0.0
-                    # return self.parseError("error reading frequency")
-                freq_cum.append(total_freq)
-            for _ in range(self.num_examples):
-                random_choice = random.random() * total_freq
-                index = 0
-                while freq_cum[index + 1] < random_choice:
-                    index += 1
-                self.example_index.append(index)
-
-        elif mode == "PIPE":
-            # TODO
-            pass
-        elif mode == "CUSTOM":
-            # TODO
-            pass
-        else:
-            return self.parseError("invalid sort mode")
-
     def set_sort_mode(self, sort_mode: str):
         """ Manually change sort mode to sort_mode
         :param sort_mode: new sort mode
@@ -320,8 +241,8 @@ class ExampleSet:
             else:
                 self.current_example = None
                 self.curr_ex_index = None
-        self.sort_examples()
-        self.example_iterator = ExampleIterator(self, self.sort_mode)
+        # self.sort_examples()
+        self.example_iterator = ExampleIterator(self)
         return True
 
     def register_example(self, E: Example, new=True):

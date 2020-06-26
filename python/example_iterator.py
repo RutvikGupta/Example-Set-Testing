@@ -14,10 +14,10 @@ class ExampleIterator:
     iter_list: List[ExampleIndex]
     num_examples: int
 
-    def __init__(self, S, sort_mode: str):
+    def __init__(self, S):
         self.example_set = S
         self.example = S.example
-        self.num_examples = len(self.example_set.example)
+        self.num_examples = S.num_examples
         self.index_list = []
         self.sort_examples()
         # self.index_list = self.example_set.example_index
@@ -77,6 +77,9 @@ class ExampleIterator:
         """ Re-sort the example list according to mode and updates first_example,
         last_example and each example.next accordingly.
         """
+        print(self.index_list)
+        for i in self.iter_list:
+            print(i.value)
         if not self.example:
             return
         self.sort_examples()
@@ -120,6 +123,7 @@ class ExampleIterator:
         """
         mode = self.example_set.sort_mode
         self.index_list = []
+        self.iter_list = []
         if mode == "ORDERED":
             for i in range(self.num_examples):
                 self.index_list.append(i)
