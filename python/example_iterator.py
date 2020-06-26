@@ -16,6 +16,7 @@ class ExampleIterator:
 
     def __init__(self, S, sort_mode: str):
         self.example_set = S
+        self.example = S.example
         self.index_list = self.example_set.example_index
         self.num_examples = len(self.example_set.example)
         self.iter_list = []
@@ -23,12 +24,14 @@ class ExampleIterator:
         self.reset_example_list()
 
     def link_up_index_list(self):
-        for i in range(len(self.num_examples)):
+        for i in range(self.num_examples):
+            print(i)
+            print(self.iter_list)
             self.iter_list.append(ExampleIndex(self.index_list[i]))
 
-        for i in range(1, len(self.num_examples)):
+        for i in range(1, self.num_examples):
             self.iter_list[i - 1].next = self.iter_list[i]
-        for i in range(len(self.num_examples) - 2, -1, -1):
+        for i in range(self.num_examples - 2, -1, -1):
             self.iter_list[i + 1].prev = self.iter_list[i]
         self.curr = self.iter_list[0]
 
