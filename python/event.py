@@ -1,4 +1,3 @@
-
 from typing import List
 import re
 from python.unit_group import UnitGroup
@@ -7,6 +6,7 @@ from python.unit_group import UnitGroup
 DEF_V_maxTime = None
 DEF_V_minTime = None
 DEF_V_graceTime = None
+
 
 class Event:
     """Event class. Consist of information related to one event of the Example object
@@ -116,7 +116,7 @@ class Event:
             target_group_len.append(group.num_units)
             target_group_name.append(group.name)
         event_string = event_list.strip()
-        inp_tar_lst = re.split("[IT]:", event_string)
+        inp_tar_lst = re.split("\[[ITB]\]:", event_string)
         inp_tar_lst.pop(0)
         # separates by letter (dense only) and removes the first value
         # because it's the description and does not contain data
@@ -146,6 +146,12 @@ class Event:
     def add_unit_groups(self, doing_inputs: bool, group_len: List[int], units: List[str], unitNames: List[str]):
         counter = 0
         group_counter = 0
+        reg = re.compile("{(.+)}\*")
+        if reg.match(units[0]):
+            open_brac = units[0].find("{")
+            close_brac = units[0].find("}")
+            value = units[0][open_brac + 1: close_brac]
+            units = [value for _ in range(sum(group_len))]
         while counter < len(units) and group_counter < len(group_len):
             unit_group = UnitGroup(self, group_len[group_counter], unitNames[group_counter])
             for _ in range(group_len[group_counter]):

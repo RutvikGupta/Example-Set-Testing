@@ -1,9 +1,8 @@
-import random
 from typing import List
 import re
-from example import Example
-from event import Event
-from example_iterator import ExampleIterator
+from python.example import Example
+from python.event import Event
+from python.example_iterator import ExampleIterator
 
 """/* EXAMPLE SET FIELDS */"""
 DEF_S_mode = bool(1 << 0)
@@ -242,10 +241,17 @@ class ExampleSet:
                 self.current_example = None
                 self.curr_ex_index = None
 
+        self.set_example_name()
+
         self.example_iterator = ExampleIterator(self)
         if self.example_iterator.reset_example_list() is False:
             return False
         return True
+
+    def set_example_name(self):
+        for ex in self.example:
+            if ex.name is None:
+                ex.name = self.example.index(ex)
 
     def register_example(self, E: Example, new=True):
         """ Add Example E to ExampleSet S and update the attributes of S
