@@ -12,14 +12,15 @@ list = f.read().split(";")
 #     a.append(i.strip())
 #
 # print(a)
-element = "0 1 2 4"
+element = "I:{first} 0 0 B:{third} 0"
+print(re.split("[IBT]:", element))
 A = re.findall(r'{(.*?)}[^*]', element)
 lst = re.split(r'{(.*?)}[^*]', element)
 lst.pop(0)
 for i in A:
     while i in lst:
         lst.remove(i)
-print(lst)
+# print(lst)
 
 #
 # def ignore_commented_lines(example_array: str):

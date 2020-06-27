@@ -114,7 +114,7 @@ class Event:
             target_group_len.append(group.num_units)
             target_group_name.append(group.name)
         event_string = event_list.strip()
-        inp_tar_lst = re.split("\[[ITB]\]:", event_string)
+        inp_tar_lst = re.split("[ITB]:", event_string)
         inp_tar_lst.pop(0)
         # separates by letter (dense only) and removes the first value
         # because it's the description and does not contain data
@@ -172,14 +172,20 @@ class Event:
                     event_dict["B"] = []
 
         if "I" in event_dict:
+            if type(event_dict["I"]) is str:
+                event_dict["I"] = event_dict["I"].split()
             if self.add_unit_groups(True, input_group_len, event_dict["I"], input_group_name) is False:
                 return False
 
         if "T" in event_dict:
+            if type(event_dict["T"]) is str:
+                event_dict["T"] = event_dict["T"].split()
             if self.add_unit_groups(False, target_group_len, event_dict["T"], target_group_name) is False:
                 return False
 
         if "B" in event_dict:
+            if type(event_dict["B"]) is str:
+                event_dict["B"] = event_dict["B"].split()
             if self.add_unit_groups(True, input_group_len, event_dict["B"], input_group_name):
                 return False
             if self.add_unit_groups(False, target_group_len, event_dict["B"], target_group_name):
@@ -197,7 +203,7 @@ class Event:
         given_group_len = []
         units = []
         for i in range(len(unit_names)):
-            units.extend(unit_values[i].strip())
+            units.extend(unit_values[i].split())
             group_length = group_lens[group_names.index(unit_names[i])]
             given_group_len.append(group_length)
 
