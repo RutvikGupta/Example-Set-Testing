@@ -55,7 +55,7 @@ class UnitGroup:
             if unit_value == "-":
                 self.group = np.append(self.group, [float("NaN")])
             elif unit_value.isdigit():
-                self.group = np.append(self.group, [unit_value])
+                self.group = np.append(self.group, [int(unit_value)])
             else:
                 return False
         else:
