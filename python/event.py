@@ -3,9 +3,9 @@ import re
 from python.unit_group import UnitGroup
 
 """/* EVENT FIELDS */"""
-DEF_V_maxTime = None
-DEF_V_minTime = None
-DEF_V_graceTime = None
+DEF_V_maxTime = 1.0
+DEF_V_minTime = 0.0
+DEF_V_graceTime = 0.0
 
 
 class Event:
@@ -296,8 +296,9 @@ class Event:
             self.proc = value
         elif lookup_string == "min:":
             if p.match(value):
-                self.min_time = float(value)
-                # remove the last piece, which is space or "]"
+                if self.min_time <= float(value) <= self.max_time:
+                    self.min_time = float(value)
+                    # remove the last piece, which is space or "]"
             elif value == "-":
                 self.min_time = None
             else:
@@ -306,7 +307,8 @@ class Event:
                     self.example.set.example.index(self.example)))
         elif lookup_string == "max:":
             if p.match(value):
-                self.max_time = float(value)
+                if self.max_time >= float(value) >= self.min_time:
+                    self.max_time = float(value)
             elif value == "-":
                 self.max_time = None
             else:
@@ -315,7 +317,8 @@ class Event:
                     self.example.set.example.index(self.example)))
         elif lookup_string == "grace:":
             if p.match(value):
-                self.grace_time = float(value)
+                if float(value) <= self.grace_time:
+                    self.grace_time = float(value)
             elif value == "-":
                 self.grace_time = None
             else:

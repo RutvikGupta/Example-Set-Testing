@@ -36,6 +36,9 @@ class Example:
     events_data = []
     event_headers = []
     proc = None
+    total_max_time = 0.0
+    total_min_time = 0.0
+    total_grace_time = 0.0
 
     def __init__(self, S, frequency=DEF_E_frequency):
         self.frequency = frequency
@@ -43,6 +46,12 @@ class Example:
         self.event = []
         self.events_data = []
         self.event_headers = []
+
+    def get_total_time(self):
+        for e in self.event:
+            self.total_max_time += e.max_time
+            self.total_min_time += e.min_time
+            self.total_grace_time += e.grace_time
 
     def iterate_event(self):
         """ Return the event at curr_ev_index and increment curr_ev_index by 1

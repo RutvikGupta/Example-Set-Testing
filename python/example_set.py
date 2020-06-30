@@ -239,6 +239,7 @@ class ExampleSet:
             else:
                 self.current_example = None
                 self.curr_ex_index = None
+            E.get_total_time()
 
         self.set_example_name()
 
