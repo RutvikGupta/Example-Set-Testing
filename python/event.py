@@ -1,11 +1,11 @@
 from typing import List
 import re
-from python.unit_group import UnitGroup
+from examples.unit_group import UnitGroup
 
 """/* EVENT FIELDS */"""
-DEF_V_maxTime = 1.0
-DEF_V_minTime = 0.0
-DEF_V_graceTime = 0.0
+DEF_S_maxTime = 1.0
+DEF_S_minTime = 0.0
+DEF_S_graceTime = 0.0
 
 
 class Event:
@@ -51,15 +51,14 @@ class Event:
     input_group = []  # List[np]
     target_group = []  # List[np]
     example = None
-    ext = None  #: EventExt
     proc = None
 
     def __init__(self, E):
         S = E.set
         self.example = E
-        self.max_time = DEF_V_maxTime
-        self.min_time = DEF_V_minTime
-        self.grace_time = DEF_V_graceTime
+        self.max_time = DEF_S_maxTime
+        self.min_time = DEF_S_minTime
+        self.grace_time = DEF_S_graceTime
         self.default_input = S.default_input
         self.active_input = S.active_input
         self.default_target = S.default_target
@@ -98,11 +97,13 @@ class Event:
                     break
         return True
 
-    def parse_event_list(self, event_list: str):
+    def parse_event_list(self, event_list: str, sparse_mode: bool):
         """ Parse through event_list and populates attributes in event Event object
         in the same way as LENS. Return if an error is found.
         :param event_list: a substring of the .ex file containing information about the event
         :type event_list: str
+        :param sparse_mode: true if reading sparse mode file
+        :type sparse_mode: bool
         :return: false if an error is found
         "rtype: optional, false
         """
@@ -113,10 +114,22 @@ class Event:
             self.target_group_len.append(group.num_units)
             self.target_group_name.append(group.name)
         event_string = event_list.strip()
-        if self.parse_dense_format(event_string) is False:
-            return False
 
-    def parse_dense_format(self, event_string: str):
+        if sparse_mode:
+            if not self.parse_sparse_format(event_string):
+                return False
+        else:
+            if not self.parse_dense_format(event_string):
+                return False
+
+    def parse_dense_format(self, event_string: str) -> bool:
+        """ Assuming dense format for event_string, reads the string and sets values for
+        the unit groups of this event accordingly. Return true if successful, else false.
+
+        :param event_string: string representation of an event in dense format
+        :type event_string: str
+        :return: bool
+        """
         inp_tar_lst = re.split("[ITB]:", event_string)
         inp_tar_lst.pop(0)
         # separates by letter (dense only) and removes the first value
@@ -129,6 +142,7 @@ class Event:
                 event_dict[unit_type] = inp_tar_lst[i]
                 i += 1
         for unit_type in event_dict:
+            # event_dict is the dictionary where keys are associated with their list of values
             if re.search(r'{(.*?)}[^*]', event_dict[unit_type]) is not None:
                 if unit_type == "I" or unit_type == "B":
                     res = self.add_specific_unit_group(True, event_dict[unit_type], self.input_group_name,
@@ -176,7 +190,14 @@ class Event:
                 return False
         return True
 
-    def parse_sparse_format(self, event_string: str):
+    def parse_sparse_format(self, event_string: str) -> bool:
+        """ Assuming dense format for event_string, reads the string and sets values for
+        the unit groups of this event accordingly. Return true if successful, else false.
+
+        :param event_string: string representation of an event in sparse format
+        :type event_string: str
+        :return: bool
+        """
         if event_string == "":
             if self.add_unit_groups(True, self.input_group_len, [], self.input_group_name) is False:
                 return False
@@ -245,6 +266,16 @@ class Event:
         return True
 
     def get_sparse_units_list(self, doing_inputs: bool, units: List[int], unit_indexes: str, external_input=None):
+        """ Fills units argument with list of spare units using the external_input. Affects inputs if
+        doing_inputs is true otherwise affects targets. If no externa_input is given, active ones will be used.
+
+        :param doing_inputs: true if add units to input group
+        :type doing_inputs: bool
+        :param units: list of units to add
+        :param unit_indexes: string of the list of indexes for the event
+        :param external_input:
+        :return:
+        """
         if external_input is None:
             if doing_inputs:
                 external_input = self.active_input
@@ -281,7 +312,16 @@ class Event:
                                                    + str(self.example.set.example.index(self.example)))
         return True
 
-    def add_specific_unit_group(self, doing_inputs, unit_lst, group_names, group_lens):
+    def add_specific_unit_group(self, doing_inputs: bool, unit_lst: str, group_names: List[str], group_lens: List[int]):
+        """ Add the unit groups which are specified in unit_lst, group_names and group_lens.
+        Each new index in these lists is information corresponding to a unit group.
+
+        :param doing_inputs:
+        :param unit_lst: list of units in group
+        :param group_names: list of names in group
+        :param group_lens: list of lengths groups in event
+        :return:
+        """
         unit_names = re.findall(r'{(.*?)}[^*]', unit_lst)
         unit_values = re.split(r'{(.*?)}[^*]', unit_lst)
         unit_values.pop(0)
@@ -300,7 +340,17 @@ class Event:
             return False
         return unit_names
 
-    def add_unit_groups(self, doing_inputs: bool, group_len: List[int], units: List[str], unitNames: List[str]):
+    def add_unit_groups(self, doing_inputs: bool, group_len: List[int], units: List[str], unit_names: List[str]):
+        """ Parses through information in group_len, units and unitNames
+        to create new unit groups accordingly, and add them to this event
+
+        :param doing_inputs:
+        :param group_len: list of lengths of groups being processed
+        :param units: list of units in the unit group being processed
+        :param unit_names: list of names of the units being processed
+
+        :return:
+        """
         counter = 0
         group_counter = 0
         reg = re.compile("{(.+)}\*")
@@ -310,11 +360,11 @@ class Event:
             value = units[0][open_brac + 1: close_brac]
             units = [value for _ in range(sum(group_len))]
         while counter < len(units) and group_counter < len(group_len):
-            unit_group = UnitGroup(self, group_len[group_counter], unitNames[group_counter])
+            unit_group = UnitGroup(self, group_len[group_counter], unit_names[group_counter])
             for _ in range(group_len[group_counter]):
                 if counter < len(units):
                     if unit_group.add_units(doing_inputs, units[counter]) is False:
-                        return self.example.set.parseError("Invalid type of unit passed at Event layer " + str(
+                        return self.example.set.parseError("Invalid type if unit passed at Event layer " + str(
                             self.example.event.index(self)) + " of example " + str(
                             self.example.set.example.index(self.example)))
                     counter += 1
@@ -322,14 +372,15 @@ class Event:
                     break
             if unit_group.check_units_size(doing_inputs) is False:
                 return self.example.set.parseError(
-                    "Too many input units in event " + str(self.example.event.index(self)) + " of example " + str(
+                    "Too many input units in event " + str(
+                        self.example.event.index(self)) + " of example " + str(
                         self.example.set.example.index(self.example)))
             group_counter += 1
         if group_counter < len(group_len):
             while group_counter < len(group_len):
-                unit_group = UnitGroup(self, group_len[group_counter], unitNames[group_counter])
+                unit_group = UnitGroup(self, group_len[group_counter], unit_names[group_counter])
                 if unit_group.check_units_size(doing_inputs) is False:
-                    return self.example.set.parseError("Too many target units at event layer " + str(
+                    return self.example.set.parseError("Too many target units" + str(
                         self.example.event.index(self)) + " of example " + str(
                         self.example.set.example.index(self.example)))
                 group_counter += 1
@@ -386,7 +437,8 @@ class Event:
             if p.match(value):
                 if self.min_time <= float(value) <= self.max_time:
                     self.min_time = float(value)
-                    # remove the last piece, which is space or "]"
+                # TODO do we need to generate error in the else case
+                # remove the last piece, which is space or "]"
             elif value == "-":
                 self.min_time = None
             else:
@@ -397,6 +449,8 @@ class Event:
             if p.match(value):
                 if self.max_time >= float(value) >= self.min_time:
                     self.max_time = float(value)
+
+                    # TODO do we need to generate error in the else case
             elif value == "-":
                 self.max_time = None
             else:
@@ -407,6 +461,7 @@ class Event:
             if p.match(value):
                 if float(value) <= self.grace_time:
                     self.grace_time = float(value)
+                # TODO do we need to generate error in the else case
             elif value == "-":
                 self.grace_time = None
             else:
@@ -450,7 +505,6 @@ class Event:
                     self.example.event.index(self)) + " of example " + str(
                     self.example.set.example.index(self.example)))
         return True
-
 
 # These are helper functions for the printing functions.
 def tab(n=1):

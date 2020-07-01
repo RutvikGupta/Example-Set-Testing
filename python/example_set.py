@@ -1,8 +1,8 @@
 from typing import List
 import re
-from python.example import Example
-from python.event import Event
-from python.example_iterator import ExampleIterator
+from examples.example import Example
+from examples.event import Event
+from examples.example_iterator import ExampleIterator
 
 """/* EXAMPLE SET FIELDS */"""
 DEF_S_mode = bool(1 << 0)
@@ -84,20 +84,13 @@ class ExampleSet:
     :type file_str: str
     """
     name: str
-    num: int
-    mode: int
     num_examples: int
-    num_events: int
 
     example = []  #: List[Example]  list of examples
     example_iterator: ExampleIterator
     example_index = []
-    current_example = None
-    curr_ex_index = 0
-    cycle_num = 0
     first_example = None  #: Example
     last_example = None  #: Example
-    # Tcl_Obj defined in C macro in example.h
     # proc: Tcl_Obj
     # chooseExample: Tcl_Obj
     max_time: float
@@ -118,9 +111,10 @@ class ExampleSet:
 
     def __init__(self, name: str, file_name: str, input_groups, target_groups, default_input: int, active_input: int,
                  default_target: int,
-                 active_target: int, def_s_pipe_loop=DEF_S_pipeLoop,
+                 active_target: int, mode="ORDERED", def_s_pipe_loop=DEF_S_pipeLoop,
                  def_s_max_time=DEF_S_maxTime, def_s_min_time=DEF_S_minTime,
                  def_s_grace_time=DEF_S_graceTime):
+
         self.name = name
         self.pipeLoop = def_s_pipe_loop
         self.max_time = def_s_max_time
@@ -142,7 +136,8 @@ class ExampleSet:
         self.input_group = input_groups
         self.target_group = target_groups
         self.proc = None
-        self.sort_mode = "ORDERED"
+        self.sort_mode = mode
+        self.sparse_mode = False
 
     def iterate_example(self):
         return self.example_iterator.iterate_example()
@@ -188,12 +183,27 @@ class ExampleSet:
         # open file as string f
         f = open(name)
         # split file by ";"
-        file_str = f.read()
-        split_list = ignore_commented_lines(file_str).split(";")
+        file_str = ignore_commented_lines(f.read())
+        self.is_sparse_format(file_str)
+        split_list = file_str.split(";")
         example_list = []
         for e in split_list:
             example_list.append(e.strip())
         return self.read_example(example_list)
+
+    def is_sparse_format(self, example_set_string: str) -> bool:
+        """ Returns true if the raw string text of example set file (after commented
+        lines are ignored) looks like it's in sparse format
+        :param example_set_string: raw string text of example set file
+        :type example_set_string: str
+        :rtype: bool
+        """
+        for s in ["i:", "t:", "b:"]:
+            if s in example_set_string:
+                self.sparse_mode = True
+                return True
+        self.sparse_mode = False
+        return False
 
     def read_example(self, example_list: List[str]):
         """ Read the example_list from the .ex file, fill attributes of S and
@@ -225,22 +235,15 @@ class ExampleSet:
                 new_event = Event(E)
                 E.event.append(new_event)
             if E.num_events == 1:
-                if E.event[0].parse_event_list(example_list[j]) is False:
+                if E.event[0].parse_event_list(example_list[j], self.sparse_mode) is False:
                     return False
             else:
                 for i in range(E.num_events):
                     if E.event[i].parse_event_header_string(E.event_headers[i]) is False:
                         return False
-                    if E.event[i].parse_event_list(E.events_data[i]) is False:
+                    if E.event[i].parse_event_list(E.events_data[i], self.sparse_mode) is False:
                         return False
-            if self.example:
-                self.current_example = self.example[0]
-                self.curr_ex_index = 0
-            else:
-                self.current_example = None
-                self.curr_ex_index = None
             E.get_total_time()
-
         self.set_example_name()
 
         self.example_iterator = ExampleIterator(self)
@@ -432,12 +435,4 @@ def format_object_line(L, num_tabs=0, row_size=10):
 
 
 if __name__ == "__main__":
-    E = ExampleSet("xor_dense.ex", "xor_dense.ex", [], [], 0, 1, 0, 1)
-    E.read_in_file(E.file_name)
-    E.first_example.print_out()
-    # E.write_example_set_to_file("testing.txt")
-
-    E.set_sort_mode("PERMUTED")
-    # E.print_out_examples()
-    for i in range(8):
-        print(E.iterate_example())
+    pass

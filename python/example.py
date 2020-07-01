@@ -1,3 +1,4 @@
+
 import re
 
 """/* EXAMPLE FIELDS */"""
@@ -32,7 +33,7 @@ class Example:
     set = None  #: ExampleSet
     next = None  #: Example
     frequency: float
-    probability = 0.0
+    probability = 0.0  #: float
     events_data = []
     event_headers = []
     proc = None
@@ -123,7 +124,7 @@ class Example:
                 example_array = example_array.replace(example_array[index: find_newline + 1], '')
             else:
                 return self.set.parseError("missing value after \"freq:\" in header of example " + str(
-                    self.example.set.example.index(self.example)))
+                        self.example.set.example.index(self.example)))
 
         if "proc:" in example_array:
             index = example_array.find("proc:")
