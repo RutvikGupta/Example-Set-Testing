@@ -195,13 +195,14 @@ class Event:
                 if re.search(r'{(.*?)}', event_dict[unit_type]) is not None:
                     external_inputs = re.findall(r'{(.*?)}', event_dict[unit_type])
                     unit_indexes = re.split(r'{(.*?)}', event_dict[unit_type])
+                    unit_indexes.pop(0)
                     for inpt in external_inputs:
                         while inpt in unit_indexes:
                             unit_indexes.remove(inpt)
                     if unit_type == "i" or unit_type == "b":
                         unit_lst = [self.default_input for _ in range(sum(self.input_group_len))]
                         for i in range(len(external_inputs)):
-                            if self.get_sparse_units_list(True, unit_lst, int(unit_indexes[i]),
+                            if self.get_sparse_units_list(True, unit_lst, unit_indexes[i],
                                                           external_inputs[i]) is False:
                                 return False
                         if self.add_unit_groups(True, self.input_group_len, unit_lst,
@@ -210,7 +211,7 @@ class Event:
                     elif unit_type == "t" or unit_type == "b":
                         unit_lst = [self.default_target for _ in range(sum(self.target_group_len))]
                         for i in range(len(external_inputs)):
-                            if self.get_sparse_units_list(False, unit_lst, int(unit_indexes[i]),
+                            if self.get_sparse_units_list(False, unit_lst, unit_indexes[i],
                                                           external_inputs[i]) is False:
                                 return False
                         if self.add_unit_groups(False, self.target_group_len, unit_lst,
