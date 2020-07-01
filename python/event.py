@@ -67,6 +67,10 @@ class Event:
         self.input_group = []
         self.target_group = []
         self.proc = None
+        self.input_group_len = []
+        self.input_group_name = []
+        self.target_group_len = []
+        self.target_group_name = []
 
     def parse_event_header_string(self, event_header: str):
         """ Parse through event_header substring and assign the values to event using lookup_list
@@ -102,18 +106,17 @@ class Event:
         :return: false if an error is found
         "rtype: optional, false
         """
-        input_group_len = []
-        input_group_name = []
-        target_group_len = []
-        target_group_name = []
-        # was called event.example.set.input_group, but this caused error?
         for group in self.example.set.input_group:
-            input_group_len.append(group.num_units)
-            input_group_name.append(group.name)
+            self.input_group_len.append(group.num_units)
+            self.input_group_name.append(group.name)
         for group in self.example.set.target_group:
-            target_group_len.append(group.num_units)
-            target_group_name.append(group.name)
+            self.target_group_len.append(group.num_units)
+            self.target_group_name.append(group.name)
         event_string = event_list.strip()
+        if self.parse_dense_format(event_string) is False:
+            return False
+
+    def parse_dense_format(self, event_string: str):
         inp_tar_lst = re.split("[ITB]:", event_string)
         inp_tar_lst.pop(0)
         # separates by letter (dense only) and removes the first value
@@ -127,69 +130,154 @@ class Event:
                 i += 1
         for unit_type in event_dict:
             if re.search(r'{(.*?)}[^*]', event_dict[unit_type]) is not None:
-                if unit_type == "I":
-                    res = self.add_specific_unit_group(True, event_dict[unit_type], input_group_name, input_group_len)
+                if unit_type == "I" or unit_type == "B":
+                    res = self.add_specific_unit_group(True, event_dict[unit_type], self.input_group_name,
+                                                       self.input_group_len)
                     if res is False:
                         return False
                     else:
                         for name in res:
-                            index = input_group_name.index(name)
-                            input_group_name.pop(index)
-                            input_group_len.pop(index)
-                    event_dict["I"] = []
+                            index = self.input_group_name.index(name)
+                            self.input_group_name.pop(index)
+                            self.input_group_len.pop(index)
+                    if unit_type == "I":
+                        event_dict["I"] = []
 
-                if unit_type == "T":
-                    res = self.add_specific_unit_group(False, event_dict[unit_type], target_group_name,
-                                                       target_group_len)
+                if unit_type == "T" or unit_type == "B":
+                    res = self.add_specific_unit_group(False, event_dict[unit_type], self.target_group_name,
+                                                       self.target_group_len)
                     if res is False:
                         return False
                     else:
                         for name in res:
-                            index = target_group_name.index(name)
-                            target_group_name.pop(index)
-                            target_group_len.pop(index)
-                    event_dict["T"] = []
-
-                if unit_type == "B":
-                    res_tar = self.add_specific_unit_group(False, event_dict[unit_type], target_group_name,
-                                                           target_group_len)
-                    if res_tar is False:
-                        return False
-                    res_in = self.add_specific_unit_group(False, event_dict[unit_type], input_group_name,
-                                                          input_group_len)
-                    if res_in is False:
-                        return False
-                    else:
-                        for name in res_tar:
-                            index = target_group_name.index(name)
-                            target_group_name.pop(index)
-                            target_group_len.pop(index)
-
-                        for name in res_in:
-                            index = input_group_name.index(name)
-                            input_group_name.pop(index)
-                            input_group_len.pop(index)
-                    event_dict["B"] = []
+                            index = self.target_group_name.index(name)
+                            self.target_group_name.pop(index)
+                            self.target_group_len.pop(index)
+                    event_dict[unit_type] = []
 
         if "I" in event_dict:
             if type(event_dict["I"]) is str:
                 event_dict["I"] = event_dict["I"].split()
-            if self.add_unit_groups(True, input_group_len, event_dict["I"], input_group_name) is False:
+            if self.add_unit_groups(True, self.input_group_len, event_dict["I"], self.input_group_name) is False:
                 return False
 
         if "T" in event_dict:
             if type(event_dict["T"]) is str:
                 event_dict["T"] = event_dict["T"].split()
-            if self.add_unit_groups(False, target_group_len, event_dict["T"], target_group_name) is False:
+            if self.add_unit_groups(False, self.target_group_len, event_dict["T"], self.target_group_name) is False:
                 return False
 
         if "B" in event_dict:
             if type(event_dict["B"]) is str:
                 event_dict["B"] = event_dict["B"].split()
-            if self.add_unit_groups(True, input_group_len, event_dict["B"], input_group_name):
+            if self.add_unit_groups(True, self.input_group_len, event_dict["B"], self.input_group_name):
                 return False
-            if self.add_unit_groups(False, target_group_len, event_dict["B"], target_group_name):
+            if self.add_unit_groups(False, self.target_group_len, event_dict["B"], self.target_group_name):
                 return False
+        return True
+
+    def parse_sparse_format(self, event_string: str):
+        if event_string == "":
+            if self.add_unit_groups(True, self.input_group_len, [], self.input_group_name) is False:
+                return False
+            if self.add_unit_groups(False, self.target_group_len, [], self.target_group_name) is False:
+                return False
+        else:
+            event_dict = {}
+            inp_tar_lst = re.split("[itb]:", event_string)
+            inp_tar_lst.pop(0)
+            i = 0
+            for unit_type in ["i", "t", "b"]:
+                if unit_type in event_string:
+                    event_dict[unit_type] = inp_tar_lst[i]
+                    i += 1
+            for unit_type in event_dict:
+                if re.search(r'{(.*?)}', event_dict[unit_type]) is not None:
+                    external_inputs = re.findall(r'{(.*?)}', event_dict[unit_type])
+                    unit_indexes = re.split(r'{(.*?)}', event_dict[unit_type])
+                    for inpt in external_inputs:
+                        while inpt in unit_indexes:
+                            unit_indexes.remove(inpt)
+                    if unit_type == "i" or unit_type == "b":
+                        unit_lst = [self.default_input for _ in range(sum(self.input_group_len))]
+                        for i in range(len(external_inputs)):
+                            if self.get_sparse_units_list(True, unit_lst, int(unit_indexes[i]),
+                                                          external_inputs[i]) is False:
+                                return False
+                        if self.add_unit_groups(True, self.input_group_len, unit_lst,
+                                                self.input_group_name) is False:
+                            return False
+                    elif unit_type == "t" or unit_type == "b":
+                        unit_lst = [self.default_target for _ in range(sum(self.target_group_len))]
+                        for i in range(len(external_inputs)):
+                            if self.get_sparse_units_list(False, unit_lst, int(unit_indexes[i]),
+                                                          external_inputs[i]) is False:
+                                return False
+                        if self.add_unit_groups(False, self.target_group_len, unit_lst,
+                                                self.target_group_name) is False:
+                            return False
+                else:
+                    if unit_type == "i" or unit_type == "b":
+                        unit_lst = [self.default_input for _ in range(sum(self.input_group_len))]
+                        if self.get_sparse_units_list(True, unit_lst, event_dict[unit_type]) is False:
+                            return False
+                        if self.add_unit_groups(True, self.input_group_len, unit_lst,
+                                                self.input_group_name) is False:
+                            return False
+
+                    if unit_type == "t" or unit_type == "b":
+                        unit_lst = [self.default_target for _ in range(sum(self.target_group_len))]
+                        if self.get_sparse_units_list(False, unit_lst, event_dict[unit_type]) is False:
+                            return False
+                        if self.add_unit_groups(False, self.target_group_len, unit_lst,
+                                                self.target_group_name) is False:
+                            return False
+            if "b" not in event_dict:
+                if "i" not in event_dict:
+                    if self.add_unit_groups(True, self.input_group_len, [],
+                                            self.input_group_name) is False:
+                        return False
+                if "t" not in event_dict:
+                    if self.add_unit_groups(False, self.target_group_len, [],
+                                            self.target_group_name) is False:
+                        return False
+        return True
+
+    def get_sparse_units_list(self, doing_inputs: bool, units: List[int], unit_indexes: str, external_input=None):
+        if external_input is None:
+            if doing_inputs:
+                external_input = self.active_input
+            else:
+                external_input = self.active_target
+        index_range = unit_indexes.split()
+        for index in index_range:
+            reg = re.compile("[0-9]+-[0-9]+")
+            if reg.match(index) is not None:
+                hyphen = index.find("-")
+                start = int(index[:hyphen])
+                end = int(index[hyphen + 1:])
+                if start >= end:
+                    return self.example.set.parseError(
+                        "wrong index range passed in sparse formatting at event layer " + str(
+                            self.example.event.index(self)) + " of example " + str(
+                            self.example.set.example.index(self.example)))
+                for i in range(start, end + 1):
+                    units[i] = external_input
+            elif index == "*":
+                if doing_inputs:
+                    for i in range(len(units)):
+                        units[i] = self.active_input
+                    return True
+                else:
+                    for i in range(len(units)):
+                        units[i] = self.active_target
+                    return True
+            elif index.isdigit():
+                units[int(index)] = external_input
+            else:
+                return self.example.set.parseError("incorrect type of value passed in sparse formatting at event layer "
+                                                   + str(self.example.event.index(self)) + " of example "
+                                                   + str(self.example.set.example.index(self.example)))
         return True
 
     def add_specific_unit_group(self, doing_inputs, unit_lst, group_names, group_lens):
@@ -225,7 +313,7 @@ class Event:
             for _ in range(group_len[group_counter]):
                 if counter < len(units):
                     if unit_group.add_units(doing_inputs, units[counter]) is False:
-                        return self.example.set.parseError("Invalid type if unit passed at Event layer " + str(
+                        return self.example.set.parseError("Invalid type of unit passed at Event layer " + str(
                             self.example.event.index(self)) + " of example " + str(
                             self.example.set.example.index(self.example)))
                     counter += 1
@@ -233,15 +321,14 @@ class Event:
                     break
             if unit_group.check_units_size(doing_inputs) is False:
                 return self.example.set.parseError(
-                    "Too many input units in event " + str(
-                        self.example.event.index(self)) + " of example " + str(
+                    "Too many input units in event " + str(self.example.event.index(self)) + " of example " + str(
                         self.example.set.example.index(self.example)))
             group_counter += 1
         if group_counter < len(group_len):
             while group_counter < len(group_len):
                 unit_group = UnitGroup(self, group_len[group_counter], unitNames[group_counter])
                 if unit_group.check_units_size(doing_inputs) is False:
-                    return self.example.set.parseError("Too many target units" + str(
+                    return self.example.set.parseError("Too many target units at event layer " + str(
                         self.example.event.index(self)) + " of example " + str(
                         self.example.set.example.index(self.example)))
                 group_counter += 1
