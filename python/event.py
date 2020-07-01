@@ -169,25 +169,28 @@ class Event:
                             self.target_group_len.pop(index)
                     event_dict[unit_type] = []
 
-        if "I" in event_dict:
-            if type(event_dict["I"]) is str:
-                event_dict["I"] = event_dict["I"].split()
-            if self.add_unit_groups(True, self.input_group_len, event_dict["I"], self.input_group_name) is False:
-                return False
+            else:
+                if "I" == unit_type or "B" == unit_type:
+                    if type(event_dict[unit_type]) is str:
+                        event_dict[unit_type] = event_dict[unit_type].split()
+                    if self.add_unit_groups(True, self.input_group_len, event_dict[unit_type],
+                                            self.input_group_name) is False:
+                        return False
 
-        if "T" in event_dict:
-            if type(event_dict["T"]) is str:
-                event_dict["T"] = event_dict["T"].split()
-            if self.add_unit_groups(False, self.target_group_len, event_dict["T"], self.target_group_name) is False:
-                return False
+                if "T" == unit_type or "B" == unit_type:
+                    if type(event_dict[unit_type]) is str:
+                        event_dict[unit_type] = event_dict[unit_type].split()
+                    if self.add_unit_groups(False, self.target_group_len, event_dict[unit_type],
+                                            self.target_group_name) is False:
+                        return False
 
-        if "B" in event_dict:
-            if type(event_dict["B"]) is str:
-                event_dict["B"] = event_dict["B"].split()
-            if self.add_unit_groups(True, self.input_group_len, event_dict["B"], self.input_group_name):
-                return False
-            if self.add_unit_groups(False, self.target_group_len, event_dict["B"], self.target_group_name):
-                return False
+        if "B" not in event_dict:
+            if "I" not in event_dict:
+                if self.add_unit_groups(True, self.input_group_len, [], self.input_group_name) is False:
+                    return False
+            if "T" not in event_dict:
+                if self.add_unit_groups(False, self.target_group_len, [], self.target_group_name) is False:
+                    return False
         return True
 
     def parse_sparse_format(self, event_string: str) -> bool:
