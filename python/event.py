@@ -200,7 +200,7 @@ class Event:
                         while inpt in unit_indexes:
                             unit_indexes.remove(inpt)
                     if unit_type == "i" or unit_type == "b":
-                        unit_lst = [self.default_input for _ in range(sum(self.input_group_len))]
+                        unit_lst = [str(self.default_input) for _ in range(sum(self.input_group_len))]
                         for i in range(len(external_inputs)):
                             if self.get_sparse_units_list(True, unit_lst, unit_indexes[i],
                                                           external_inputs[i]) is False:
@@ -209,7 +209,7 @@ class Event:
                                                 self.input_group_name) is False:
                             return False
                     elif unit_type == "t" or unit_type == "b":
-                        unit_lst = [self.default_target for _ in range(sum(self.target_group_len))]
+                        unit_lst = [str(self.default_target) for _ in range(sum(self.target_group_len))]
                         for i in range(len(external_inputs)):
                             if self.get_sparse_units_list(False, unit_lst, unit_indexes[i],
                                                           external_inputs[i]) is False:
@@ -219,7 +219,7 @@ class Event:
                             return False
                 else:
                     if unit_type == "i" or unit_type == "b":
-                        unit_lst = [self.default_input for _ in range(sum(self.input_group_len))]
+                        unit_lst = [str(self.default_input) for _ in range(sum(self.input_group_len))]
                         if self.get_sparse_units_list(True, unit_lst, event_dict[unit_type]) is False:
                             return False
                         if self.add_unit_groups(True, self.input_group_len, unit_lst,
@@ -227,7 +227,7 @@ class Event:
                             return False
 
                     if unit_type == "t" or unit_type == "b":
-                        unit_lst = [self.default_target for _ in range(sum(self.target_group_len))]
+                        unit_lst = [str(self.default_target) for _ in range(sum(self.target_group_len))]
                         if self.get_sparse_units_list(False, unit_lst, event_dict[unit_type]) is False:
                             return False
                         if self.add_unit_groups(False, self.target_group_len, unit_lst,
@@ -263,18 +263,18 @@ class Event:
                             self.example.event.index(self)) + " of example " + str(
                             self.example.set.example.index(self.example)))
                 for i in range(start, end + 1):
-                    units[i] = external_input
+                    units[i] = str(external_input)
             elif index == "*":
                 if doing_inputs:
                     for i in range(len(units)):
-                        units[i] = self.active_input
+                        units[i] = str(self.active_input)
                     return True
                 else:
                     for i in range(len(units)):
-                        units[i] = self.active_target
+                        units[i] = str(self.active_target)
                     return True
             elif index.isdigit():
-                units[int(index)] = external_input
+                units[int(index)] = str(external_input)
             else:
                 return self.example.set.parseError("incorrect type of value passed in sparse formatting at event layer "
                                                    + str(self.example.event.index(self)) + " of example "
